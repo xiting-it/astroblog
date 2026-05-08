@@ -28,7 +28,6 @@ const {
   tags = [],
   excerpt,
   content,
-  readTime,
   backgroundImage,
   isPinned = false,
   showFullMeta = true,
@@ -37,7 +36,6 @@ const {
 
 // Process content to extract content before <!--more--> if exists
 let contentAboveMore = '';
-let contentBelowMore = '';
 let displayExcerpt = excerpt;
 
 if (content) {
@@ -45,7 +43,8 @@ if (content) {
   if (moreIndex !== -1) {
     // Content has <!--more--> marker
     contentAboveMore = content.substring(0, moreIndex);
-    contentBelowMore = content.substring(moreIndex + 11); // After <!--more-->
+    // Content below <!--more--> is not used in card view
+    // contentBelowMore = content.substring(moreIndex + 11);
 
     // If no excerpt, use content above <!--more-->
     if (!displayExcerpt && contentAboveMore.trim()) {
