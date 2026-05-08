@@ -1,6 +1,11 @@
 ---
 import NextLayout from '../../layouts/NextLayout.astro';
 
+export function getStaticPaths() {
+  // 当前未使用分类功能，返回空数组
+  return [];
+}
+
 const { category } = Astro.params;
 
 // 当前未使用分类功能

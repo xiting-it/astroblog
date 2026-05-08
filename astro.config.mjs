@@ -21,7 +21,7 @@ export default defineConfig({
     },
     resolve: {
       alias: {
-        '@': '/root/astroblog/src',
+        '@': './src',
       },
     },
   },

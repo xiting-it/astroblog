@@ -2,7 +2,11 @@
 import NextLayout from '../layouts/NextLayout.astro';
 
 // 当前未使用分类功能，仅使用标签
-const categoriesData = [];
+const categoriesData: Array<{
+  slug: string;
+  name: string;
+  post_count?: number;
+}> = [];
 ---
 
 <NextLayout title="分类">

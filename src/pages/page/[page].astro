@@ -3,6 +3,22 @@ import NextLayout from '../../layouts/NextLayout.astro';
 import PostCardNext from '../../components/PostCardNext.astro';
 import { getCollection } from 'astro:content';
 
+export async function getStaticPaths() {
+  const POSTS_PER_PAGE = 10;
+  const allPosts = await getCollection('posts');
+  const totalPages = Math.ceil(allPosts.length / POSTS_PER_PAGE);
+
+  // 生成分页路由（从第2页开始，第1页是首页）
+  const paths = [];
+  for (let i = 2; i <= totalPages; i++) {
+    paths.push({
+      params: { page: i.toString() },
+    });
+  }
+
+  return paths;
+}
+
 // 每页显示的文章数（与首页保持一致）
 const POSTS_PER_PAGE = 10;
 
@@ -11,12 +27,12 @@ const allPosts = (await getCollection('posts')).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
 );
 
+// 计算总页数
+const totalPages = Math.ceil(allPosts.length / POSTS_PER_PAGE);
+
 // 获取当前页码
 const pageParam = Astro.params.page;
 const currentPage = parseInt(pageParam || '1') || 1;
-
-// 计算总页数
-const totalPages = Math.ceil(allPosts.length / POSTS_PER_PAGE);
 
 // 如果页码超出范围，重定向到首页
 if (currentPage < 1 || currentPage > totalPages) {
