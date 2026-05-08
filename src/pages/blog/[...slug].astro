@@ -1,5 +1,5 @@
 ---
-import { getCollection, getEntry, render } from 'astro:content';
+import { getCollection, render } from 'astro:content';
 import NextLayout from '../../layouts/NextLayout.astro';
 import Giscus from '../../components/Giscus.astro';
 
@@ -8,24 +8,14 @@ export async function getStaticPaths() {
   const posts = await getCollection('posts');
   return posts.map((post) => ({
     params: { slug: post.id.replace('.md', '') },
+    props: { post },
   }));
 }
 
-// Get slug from URL params
-const { slug } = Astro.params;
-
-// Get post from content collection
-const postEntry = await getEntry('posts', `${slug}.md`);
-
-if (!postEntry) {
-  return new Response('Post not found', {
-    status: 404,
-    statusText: 'Not Found'
-  });
-}
-
-const { data } = postEntry;
-const { Content } = await render(postEntry);
+// Get post from props
+const { post } = Astro.props;
+const { data } = post;
+const { Content } = await render(post);
 
 // Format dates
 const formattedDate = data.pubDate.toLocaleDateString('zh-CN', {
@@ -49,14 +39,14 @@ const sortedPosts = allPosts.sort((a, b) =>
 );
 
 // Find current post index
-const currentIndex = sortedPosts.findIndex((p) => p.id === `${slug}.md`);
+const currentIndex = sortedPosts.findIndex((p) => p.id === post.id);
 
 // Get previous and next posts
 const prevPost = currentIndex < sortedPosts.length - 1 ? sortedPosts[currentIndex + 1] : null;
 const nextPost = currentIndex > 0 ? sortedPosts[currentIndex - 1] : null;
 
 // Get raw content for word count
-const rawContent = postEntry?.body?.trim() || '';
+const rawContent = post?.body?.trim() || '';
 const wordCount = rawContent.length;
 ---
 
