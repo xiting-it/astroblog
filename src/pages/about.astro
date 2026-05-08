@@ -1,0 +1,199 @@
+---
+import NextLayout from '../layouts/NextLayout.astro';
+import Giscus from '../components/Giscus.astro';
+---
+
+<NextLayout title="关于">
+  <div class="about-page">
+    <div class="about-card">
+      <div class="about-header">
+        <div class="about-avatar">
+          <img src="https://a1.boltp.com/2026/05/08/69fceffb3fe6d.png" alt="Xiting" />
+        </div>
+        <h1 class="about-title">Xiting</h1>
+        <p class="about-subtitle">一个热爱Agent开发的学习者</p>
+      </div>
+
+      <div class="about-content">
+        <section class="about-section">
+          <h2>关于我</h2>
+          <p>
+            一位喜欢各种技术的开发者与学习者，热衷于探索新技术、爱记录学习心得
+          </p>
+          <p>
+            本Blog主要分享我正在研究的Agent、LLM模型相关的内容，以及macOS应用开发相关的内容，欢迎各位UU一起学习（bushi
+          </p>
+        </section>
+
+        <section class="about-section">
+          <h2>社交账号</h2>
+          <div class="social-links">
+            <a href="https://github.com/mothorror" target="_blank" rel="noopener" class="social-card">
+              <i class="fa-brands fa-github"></i>
+              <div class="social-info">
+                <div class="social-name">GitHub</div>
+                <div class="social-handle">@xiting</div>
+              </div>
+            </a>
+
+            <a href="https://space.bilibili.com/361167032?spm_id_from=333.1007.0.0" target="_blank" rel="noopener" class="social-card">
+              <i class="fa fa-tv"></i>
+              <div class="social-info">
+                <div class="social-name">哔哩哔哩</div>
+                <div class="social-handle">@鲁米诺地尔酊</div>
+              </div>
+            </a>
+
+            <a href="mailto:zlsyzx@outlook.com" class="social-card">
+              <i class="fa fa-envelope"></i>
+              <div class="social-info">
+                <div class="social-name">邮箱</div>
+                <div class="social-handle">联系我</div>
+              </div>
+            </a>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- 评论系统 -->
+    <div class="comment-block">
+      <Giscus lang="zh-CN" theme="light" />
+    </div>
+  </div>
+</NextLayout>
+
+<style>
+  .about-page {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 40px 20px;
+  }
+
+  .about-card {
+    background: #fff;
+    border-radius: 0;
+    padding: 40px 30px 30px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .about-header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .about-avatar {
+    width: 256px;
+    height: 256px;
+    margin: 0 auto 20px;
+  }
+
+  .about-avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #222;
+  }
+
+  .about-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: #222;
+    margin: 0 0 10px;
+  }
+
+  .about-subtitle {
+    font-size: 16px;
+    color: #666;
+    margin: 0;
+  }
+
+  .about-section {
+    margin-bottom: 40px;
+  }
+
+  .about-section:last-child {
+    margin-bottom: 0;
+  }
+
+  .about-section h2 {
+    font-size: 20px;
+    color: #222;
+    border-bottom: 2px solid #222;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+  }
+
+  .about-section p {
+    line-height: 1.8;
+    color: #555;
+    margin-bottom: 15px;
+  }
+
+  .social-links {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+  }
+
+  .social-card {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    background: #f8f8f8;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #333;
+    transition: all 0.3s;
+  }
+
+  .social-card:hover {
+    background: #222;
+    color: #fff;
+    transform: translateY(-2px);
+  }
+
+  .social-card i {
+    font-size: 24px;
+    width: 40px;
+    text-align: center;
+  }
+
+  .social-info {
+    flex: 1;
+  }
+
+  .social-name {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+
+  .social-handle {
+    font-size: 12px;
+    opacity: 0.7;
+  }
+
+  /* 评论区块样式 - 与文章详情页一致 */
+  .comment-block {
+    padding: 25px 42px;
+    background: #fff;
+    border-radius: 0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    margin-top: 64px; /* 与上方内容的间距 */
+    opacity: 0;
+    animation: fadeIn 0.5s ease forwards;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+</style>

@@ -1,0 +1,341 @@
+---
+const menuItems = [
+  { name: '首页', path: '/', icon: 'fa-solid fa-house' },
+  { name: '归档', path: '/archive', icon: 'fa-solid fa-box-archive' },
+  { name: '分类', path: '/categories', icon: 'fa-solid fa-layer-group' },
+  { name: '标签', path: '/tags', icon: 'fa-solid fa-tags' },
+  { name: '关于', path: '/about', icon: 'fa-solid fa-circle-info' },
+];
+---
+
+<div class="headband"></div>
+
+<header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="header-inner">
+    <div class="site-brand-wrapper">
+      <div class="site-meta">
+        <div class="custom-logo-site-title">
+          <a href="/" class="brand" rel="start">
+            <span class="site-title">XitingのBlog</span>
+          </a>
+        </div>
+        <p class="site-subtitle">Agent macOS LLM</p>
+      </div>
+
+      <div class="site-nav-toggle">
+        <button aria-label="切换导航栏">
+          <span class="btn-bar"></span>
+          <span class="btn-bar"></span>
+          <span class="btn-bar"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+    {menuItems.map((item) => (
+      <li class="menu-item" data-path={item.path}>
+        <a href={item.path} rel="section">
+          <i class={`menu-item-icon fa fa-fw ${item.icon}`}></i>
+          {item.name}
+        </a>
+      </li>
+    ))}
+    <li class="menu-item menu-item-search">
+      <a href="javascript:;" class="popup-trigger">
+        <i class="menu-item-icon fa-solid fa-magnifying-glass fa-fw"></i>
+        搜索
+      </a>
+    </li>
+  </ul>
+
+  <div class="site-search">
+    <div class="popup search-popup local-search-popup">
+      <div class="local-search-header clearfix">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <span class="popup-btn-close">
+          <i class="fa fa-times-circle"></i>
+        </span>
+        <div class="local-search-input-wrapper">
+          <input
+            autocomplete="off"
+            placeholder="搜索..."
+            spellcheck="false"
+            type="text"
+            id="local-search-input"
+          />
+        </div>
+      </div>
+      <div id="local-search-result"></div>
+    </div>
+  </div>
+</nav>
+
+<style>
+  .local-search-popup-show {
+    display: block !important;
+  }
+
+  /* 导航栏样式调整 */
+  .site-nav {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background: #e8e8e8 !important;
+  }
+
+  .menu-item {
+    position: relative;
+  }
+
+  .menu-item a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 15px;
+    font-size: 14px;
+    color: #000;
+    position: relative;
+    border-radius: 4px;
+    transition: all 0.9s ease;
+  }
+
+  /* 背景框伪元素 */
+  .menu-item a::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: calc(100% - 12px);
+    height: calc(100% - 12px);
+    background: transparent;
+    border-radius: 3px;
+    transition: all 0.9s ease;
+    z-index: -1;
+  }
+
+  /* 悬浮效果 */
+  .menu-item a:hover {
+    color: #222;
+  }
+
+  .menu-item a:hover::before {
+    background: rgba(110, 106, 106, 0.15);
+  }
+
+  /* 当前页面激活状态 */
+  .menu-item.menu-item-active a {
+    color: #222;
+    font-weight: 600;
+  }
+
+  .menu-item.menu-item-active a::before {
+    background: rgba(110, 106, 106, 0.2);
+  }
+
+  .menu-item-icon {
+    margin: 0;
+  }
+
+  /* 搜索按钮样式 */
+  .menu-item-search a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 15px;
+    border-radius: 4px;
+    transition: all 0.9s ease;
+    position: relative;
+  }
+
+  .menu-item-search a::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: calc(100% - 12px);
+    height: calc(100% - 12px);
+    background: transparent;
+    border-radius: 3px;
+    transition: all 0.9s ease;
+    z-index: -1;
+  }
+
+  .menu-item-search a:hover::before {
+    background: rgba(110, 106, 106, 0.15);
+  }
+
+  /* 头部样式调整 */
+  .site-meta {
+    padding: 20px 0 10px;
+  }
+
+  .site-title {
+    font-size: 38px;
+  }
+
+  .site-subtitle {
+    color: #fff;
+  }
+
+  /* 移动端响应式导航栏 */
+  .site-nav-toggle {
+    display: none;
+  }
+
+  @media (max-width: 767px) {
+    .site-nav-toggle {
+      display: block;
+      position: absolute;
+      top: 15px;
+      right: 20px;
+      z-index: 1000;
+    }
+
+    .site-nav-toggle button {
+      background: transparent;
+      border: none;
+      padding: 10px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .btn-bar {
+      width: 24px;
+      height: 2px;
+      background: #333;
+      transition: all 0.3s ease;
+    }
+
+    .site-nav-toggle.active .btn-bar:nth-child(1) {
+      transform: rotate(45deg) translate(5px, 5px);
+    }
+
+    .site-nav-toggle.active .btn-bar:nth-child(2) {
+      opacity: 0;
+    }
+
+    .site-nav-toggle.active .btn-bar:nth-child(3) {
+      transform: rotate(-45deg) translate(5px, -5px);
+    }
+
+    .site-nav {
+      position: fixed;
+      top: 0;
+      right: -100%;
+      width: 70%;
+      height: 100vh;
+      background: #e8e8e8;
+      transition: right 0.3s ease;
+      z-index: 999;
+      overflow-y: auto;
+      box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .site-nav.active {
+      right: 0;
+    }
+
+    .site-nav .menu {
+      flex-direction: column;
+      padding: 80px 0 20px;
+    }
+
+    .site-nav .menu-item {
+      width: 100%;
+      text-align: left;
+    }
+
+    .site-nav .menu-item a {
+      width: 100%;
+      padding: 15px 20px;
+      border-radius: 0;
+    }
+  }
+
+  /* 遮罩层 */
+  .site-nav-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 998;
+  }
+
+  .site-nav-overlay.active {
+    display: block;
+  }
+
+  @media (max-width: 767px) {
+    .site-nav-overlay.active {
+      display: block;
+    }
+  }
+</style>
+
+<div class="site-nav-overlay" id="siteNavOverlay"></div>
+
+<script is:inline>
+  // Search popup functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const searchBtn = document.querySelector('.menu-item-search');
+    const searchPopup = document.querySelector('.search-popup');
+    const closeBtn = document.querySelector('.popup-btn-close');
+
+    searchBtn?.addEventListener('click', function(e) {
+      e.preventDefault();
+      searchPopup?.classList.toggle('local-search-popup-show');
+    });
+
+    closeBtn?.addEventListener('click', function() {
+      searchPopup?.classList.remove('local-search-popup-show');
+    });
+
+    // Active menu item detection
+    const currentPath = window.location.pathname;
+    const menuItems = document.querySelectorAll('.menu-item[data-path]');
+
+    menuItems.forEach(item => {
+      const itemPath = item.getAttribute('data-path');
+
+      // Check if current path matches menu item path
+      if (currentPath === itemPath || (itemPath !== '/' && currentPath.startsWith(itemPath + '/'))) {
+        item.classList.add('menu-item-active');
+      }
+    });
+
+    // Mobile navigation toggle
+    const navToggle = document.querySelector('.site-nav-toggle button');
+    const siteNav = document.querySelector('.site-nav');
+    const navOverlay = document.getElementById('siteNavOverlay');
+
+    function toggleNav() {
+      navToggle?.classList.toggle('active');
+      siteNav?.classList.toggle('active');
+      navOverlay?.classList.toggle('active');
+      document.body.style.overflow = siteNav?.classList.contains('active') ? 'hidden' : '';
+    }
+
+    navToggle?.addEventListener('click', toggleNav);
+    navOverlay?.addEventListener('click', toggleNav);
+
+    // Close nav when clicking on menu items
+    const mobileMenuItems = document.querySelectorAll('.site-nav .menu-item a');
+    mobileMenuItems.forEach(item => {
+      item.addEventListener('click', function() {
+        if (window.innerWidth <= 767) {
+          toggleNav();
+        }
+      });
+    });
+  });
+</script>

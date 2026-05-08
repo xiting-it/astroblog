@@ -1,0 +1,166 @@
+---
+import NextLayout from '../layouts/NextLayout.astro';
+
+// Fetch all posts from API (excludes hidden posts)
+let allPosts = [];
+try {
+  const response = await fetch('http://localhost:3002/api/posts/all');
+  if (response.ok) {
+    const data = await response.json();
+    allPosts = data.posts;
+  }
+} catch (e) {
+  console.warn('Failed to fetch posts from API');
+}
+
+// Group posts by year and month
+const groupedPosts = allPosts.reduce((acc, post) => {
+  const date = new Date(post.pubDate);
+  const year = date.getFullYear();
+  const month = date.toLocaleDateString('zh-CN', { month: 'long' });
+
+  if (!acc[year]) {
+    acc[year] = {};
+  }
+  if (!acc[year][month]) {
+    acc[year][month] = [];
+  }
+  acc[year][month].push(post);
+
+  return acc;
+}, {} as Record<number, Record<string, typeof allPosts>>);
+---
+
+<NextLayout title="归档">
+  <div class="archive-page">
+    <div class="archive-inner">
+      <h1 class="archive-title">文章归档</h1>
+
+      {Object.keys(groupedPosts).length === 0 ? (
+        <div class="archive-empty">
+          <p>还没有文章</p>
+        </div>
+      ) : (
+        <div class="archive-list">
+          {Object.entries(groupedPosts)
+            .sort(([a], [b]) => Number(b) - Number(a))
+            .map(([year, months]) => (
+              <div class="archive-year">
+                <h2 class="year-title">{year}</h2>
+                <div class="year-content">
+                  {Object.entries(months)
+                    .sort(([, a], [, b]) => {
+                      const monthA = new Date(a[0].data.pubDate).getMonth();
+                      const monthB = new Date(b[0].data.pubDate).getMonth();
+                      return monthB - monthA;
+                    })
+                    .map(([month, posts]) => (
+                      <div class="archive-month">
+                        <h3 class="month-title">{month}</h3>
+                        <ul class="month-posts">
+                          {posts.map((post) => (
+                            <li class="post-item">
+                              <a href={`/blog/${post.slug}/`} class="post-link">
+                                <span class="post-date">
+                                  {new Date(post.pubDate).getDate()}日
+                                </span>
+                                <span class="post-title">{post.title}</span>
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            ))}
+        </div>
+      )}
+    </div>
+  </div>
+</NextLayout>
+
+<style>
+  .archive-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px 20px;
+  }
+
+  .archive-inner {
+    background: #fff;
+    padding: 40px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .archive-title {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 30px;
+    color: #222;
+  }
+
+  .archive-empty {
+    text-align: center;
+    padding: 40px 0;
+    color: #999;
+  }
+
+  .archive-year {
+    margin-bottom: 30px;
+  }
+
+  .year-title {
+    font-size: 22px;
+    font-weight: 600;
+    margin: 0 0 15px;
+    color: #222;
+  }
+
+  .year-content {
+    margin-left: 0;
+  }
+
+  .archive-month {
+    margin-bottom: 20px;
+  }
+
+  .month-title {
+    font-size: 16px;
+    font-weight: 500;
+    margin: 0 0 10px;
+    color: #555;
+  }
+
+  .month-posts {
+    list-style: none;
+    margin: 0;
+    padding: 0 0 0 15px;
+  }
+
+  .post-item {
+    margin: 8px 0;
+  }
+
+  .post-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #666;
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+
+  .post-link:hover {
+    color: #222;
+  }
+
+  .post-date {
+    color: #999;
+    font-size: 14px;
+  }
+
+  .post-title {
+    color: #333;
+  }
+</style>

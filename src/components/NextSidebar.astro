@@ -1,0 +1,147 @@
+---
+const sidebarClass = 'sidebar';
+const sidebarToggleClass = 'sidebar-toggle';
+---
+
+<div class={sidebarToggleClass}>
+  <div class="sidebar-toggle-line-wrap">
+    <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+    <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+    <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+  </div>
+</div>
+
+<aside id="sidebar" class={sidebarClass}>
+  <div id="sidebar-dimmer"></div>
+  <div class="sidebar-inner">
+    <div class="site-overview-wrap sidebar-panel sidebar-panel-active">
+      <div class="site-overview">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <a href="/">
+            <img class="site-author-image" itemprop="image" src="/images/avatar.png" alt="黑果小兵" />
+          </a>
+          <p class="site-author-name" itemprop="name">黑果小兵</p>
+          <p class="site-description motion-element" itemprop="description">黑果小兵</p>
+        </div>
+
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archive">
+              <span class="site-state-item-count">127</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          <div class="site-state-item site-state-categories">
+            <a href="/categories">
+              <span class="site-state-item-count">26</span>
+              <span class="site-state-item-name">分类</span>
+            </a>
+          </div>
+
+          <div class="site-state-item site-state-tags">
+            <a href="/tags">
+              <span class="site-state-item-count">289</span>
+              <span class="site-state-item-name">标签</span>
+            </a>
+          </div>
+        </nav>
+
+        <div class="feed-link motion-element">
+          <a href="/atom.xml" rel="alternate">
+            <i class="fa fa-rss"></i>
+            RSS
+          </a>
+        </div>
+
+        <div class="links-of-author motion-element">
+          <span class="links-of-author-item">
+            <a href="https://github.com/daliansky" title="GitHub &rarr; https://github.com/daliansky" rel="noopener" target="_blank">
+              <i class="fa fa-fw fa-github"></i>
+            </a>
+          </span>
+          <span class="links-of-author-item">
+            <a href="http://www.jianshu.com/u/df9143008845" title="简书 &rarr; http://www.jianshu.com/u/df9143008845" rel="noopener" target="_blank">
+              <i class="fa fa-fw fa-heartbeat"></i>
+            </a>
+          </span>
+          <span class="links-of-author-item">
+            <a href="http://shang.qq.com/wpa/qunwpa?idkey=db511a29e856f37cbb871108ffa77a6e79dde47e491b8f2c8d8fe4d3c310de91" title="QQ &rarr; http://shang.qq.com/wpa/qunwpa?idkey=db511a29e856f37cbb871108ffa77a6e79dde47e491b8f2c8d8fe4d3c310de91" rel="noopener" target="_blank">
+              <i class="fa fa-fw fa-qq"></i>
+            </a>
+          </span>
+        </div>
+
+        <div class="links-of-blogroll motion-element links-of-blogroll-block">
+          <div class="links-of-blogroll-title">
+            <i class="fa fa-fw fa-link"></i>
+            Links
+          </div>
+          <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://blog.tlhub.cn" title="https://blog.tlhub.cn" rel="noopener" target="_blank">Athlonreg</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://www.sqlsec.com" title="http://www.sqlsec.com" rel="noopener" target="_blank">国光</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<style>
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 320px;
+    height: 100%;
+    background: #fff;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 1000;
+  }
+
+  .sidebar.sidebar-active {
+    transform: translateX(0);
+  }
+
+  .sidebar-toggle {
+    position: fixed;
+    top: 50%;
+    left: 0;
+    width: 20px;
+    height: 50px;
+    background: #222;
+    cursor: pointer;
+    z-index: 999;
+    transform: translateY(-50%);
+  }
+
+  .sidebar-toggle-line-wrap {
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .sidebar-toggle-line {
+    width: 70%;
+    height: 2px;
+    background: #fff;
+    margin: 5px auto;
+  }
+</style>
+
+<script is:inline>
+  // Sidebar toggle functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const sidebarToggle = document.querySelector('.sidebar-toggle');
+    const sidebar = document.querySelector('.sidebar');
+
+    sidebarToggle?.addEventListener('click', function() {
+      sidebar?.classList.toggle('sidebar-active');
+    });
+  });
+</script>

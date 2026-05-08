@@ -1,0 +1,122 @@
+---
+import NextLayout from '../layouts/NextLayout.astro';
+
+// Fetch all posts from API (excludes hidden posts)
+let allPosts = [];
+try {
+  const response = await fetch('http://localhost:3002/api/posts/all');
+  if (response.ok) {
+    const data = await response.json();
+    allPosts = data.posts;
+  }
+} catch (e) {
+  console.warn('Failed to fetch posts from API');
+}
+
+// Get all unique tags with post count
+const tagsWithCount = allPosts.reduce((acc, post) => {
+  const postTags = post.tags || [];
+  postTags.forEach((tag) => {
+    if (!acc[tag]) {
+      acc[tag] = 0;
+    }
+    acc[tag]++;
+  });
+  return acc;
+}, {} as Record<string, number>);
+
+// Convert to array and sort
+const tagsList = Object.entries(tagsWithCount)
+  .map(([name, count]) => ({ name, count: Number(count) }))
+  .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+---
+
+<NextLayout title="标签">
+  <div class="tags-page">
+    <div class="tags-inner">
+      <h1 class="tags-title">标签</h1>
+
+      {tagsList.length === 0 ? (
+        <div class="tags-empty">
+          <p>还没有标签</p>
+        </div>
+      ) : (
+        <div class="tags-cloud">
+          {tagsList.map((tag) => (
+            <a href={`/tags/${tag.name}/`} class="tag-item">
+              <span class="tag-name">{tag.name}</span>
+              <span class="tag-count">{tag.count}</span>
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+</NextLayout>
+
+<style>
+  .tags-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px 20px;
+  }
+
+  .tags-inner {
+    background: #fff;
+    padding: 40px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .tags-title {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 30px;
+    color: #222;
+  }
+
+  .tags-empty {
+    text-align: center;
+    padding: 40px 0;
+    color: #999;
+  }
+
+  .tags-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .tag-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #f5f5f5;
+    border-radius: 20px;
+    text-decoration: none;
+    color: #333;
+    transition: all 0.3s;
+  }
+
+  .tag-item:hover {
+    background: #222;
+    color: #fff;
+  }
+
+  .tag-name {
+    font-size: 14px;
+  }
+
+  .tag-count {
+    font-size: 12px;
+    color: #999;
+    background: rgba(0, 0, 0, 0.1);
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+
+  .tag-item:hover .tag-count {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+  }
+</style>

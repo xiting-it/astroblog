@@ -1,0 +1,457 @@
+---
+interface Props {
+  title: string;
+  url: string;
+  date: string;
+  updatedDate?: string;
+  wordCount?: number;
+  author?: string;
+  categories?: Array<{ name: string; url: string }>;
+  tags?: Array<{ name: string; url: string }>;
+  excerpt?: string;
+  content?: string;
+  readTime?: string;
+  backgroundImage?: string;
+  isPinned?: boolean;
+  showFullMeta?: boolean;
+  isDetail?: boolean;
+}
+
+const {
+  title,
+  url,
+  date,
+  updatedDate,
+  wordCount,
+  author = 'Xiting',
+  categories = [],
+  tags = [],
+  excerpt,
+  content,
+  readTime,
+  backgroundImage,
+  isPinned = false,
+  showFullMeta = true,
+  isDetail = false
+} = Astro.props;
+
+// Process content to extract content before <!--more--> if exists
+let contentAboveMore = '';
+let contentBelowMore = '';
+let displayExcerpt = excerpt;
+
+if (content) {
+  const moreIndex = content.indexOf('<!--more-->');
+  if (moreIndex !== -1) {
+    // Content has <!--more--> marker
+    contentAboveMore = content.substring(0, moreIndex);
+    contentBelowMore = content.substring(moreIndex + 11); // After <!--more-->
+
+    // If no excerpt, use content above <!--more-->
+    if (!displayExcerpt && contentAboveMore.trim()) {
+      displayExcerpt = contentAboveMore;
+    }
+  }
+}
+---
+
+<article class="post post-type-normal motion-element" itemscope itemtype="http://schema.org/Article">
+  <div class="post-block">
+    {isPinned && <div class="pinned-badge">置顶</div>}
+    <header class="post-header">
+      <h1 class="post-title" itemprop="name headline">
+        <a href={url} class="post-title-link" itemprop="url">
+          {title}
+        </a>
+      </h1>
+
+      <div class="post-meta">
+        <!-- 第一行：创建日期和修改日期 -->
+        <div class="post-meta-row">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa-regular fa-calendar"></i>
+            </span>
+            <time title="创建时间" itemprop="dateCreated datePublished" datetime={date}>
+              {date}
+            </time>
+          </span>
+
+          {updatedDate && (
+            <span class="post-updated" style="margin-left: 4px;">
+              <span class="post-meta-item-icon">
+                <i class="fa-regular fa-calendar-plus"></i>
+              </span>
+              <time title="修改时间" itemprop="dateModified" datetime={updatedDate}>
+                {updatedDate}
+              </time>
+            </span>
+          )}
+        </div>
+
+        <!-- 第二行：字数 | 作者（仅在 showFullMeta 为 true 时显示） -->
+        {showFullMeta && (
+          <div class="post-meta-row">
+            {wordCount && (
+              <span class="post-wordcount">
+                <span class="post-meta-item-icon">
+                  <i class="fa-regular fa-file-word"></i>
+                </span>
+                <span title="本文字数">{wordCount}字</span>
+              </span>
+            )}
+
+            <span class="post-meta-divider">|</span>
+
+            <span class="post-author">
+              <span class="post-meta-item-icon">
+                <i class="fa-regular fa-pen-to-square"></i>
+              </span>
+              <span title="作者">作者：{author}</span>
+            </span>
+          </div>
+        )}
+
+        <!-- 第三行：分类（仅在 showFullMeta 为 true 时显示） -->
+        {showFullMeta && categories.length > 0 && (
+          <div class="post-meta-row">
+            <span class="post-category">
+              <span class="post-meta-item-icon">
+                <i class="fa-regular fa-folder-closed"></i>
+              </span>
+              {categories.map((cat, index) => (
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href={cat.url} itemprop="url" rel="index">
+                    <span itemprop="name">{cat.name}</span>
+                  </a>
+                  {index < categories.length - 1 && ', '}
+                </span>
+              ))}
+            </span>
+          </div>
+        )}
+      </div>
+    </header>
+
+    {backgroundImage && (
+      <div class="post-background" style={`background-image: url('${backgroundImage}')`}></div>
+    )}
+
+    {(!isDetail && displayExcerpt) && (
+      <div class="post-body" itemprop="articleBody">
+        <div class="post-excerpt" set:html={displayExcerpt} />
+      </div>
+    )}
+
+    {isDetail && content && (
+      <div class="post-body" itemprop="articleBody">
+        <div class="post-content" set:html={content} />
+      </div>
+    )}
+
+    <footer class="post-footer">
+      {!isDetail && displayExcerpt && (
+        <>
+          <div class="post-eof"></div>
+          <div class="post-button text-center">
+            <a class="btn" href={url} rel="contents">
+              阅读全文
+            </a>
+          </div>
+        </>
+      )}
+
+      {isDetail && (
+        <>
+          {showFullMeta && tags.length > 0 && (
+            <div class="post-tags">
+              {tags.map((tag) => (
+                <a href={tag.url} class="tag-item">
+                  <i class="fa-solid fa-tag"></i>
+                  {tag.name}
+                </a>
+              ))}
+            </div>
+          )}
+          <div class="post-eof"></div>
+        </>
+      )}
+    </footer>
+  </div>
+</article>
+
+<style>
+  .post {
+    margin: 14px 0;
+  }
+
+  .pinned-badge {
+    position: absolute;
+    top: -1px;
+    right: 20px;
+    background: #ff5722;
+    color: #fff;
+    padding: 2px 8px;
+    font-size: 12px;
+    border-radius: 0 0 4px 4px;
+    font-weight: 600;
+    z-index: 10;
+  }
+
+  .post-block {
+    padding: 25px 42px;
+    background: #fff;
+    border-radius: 0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    animation: fadeIn 0.5s ease forwards;
+    position: relative;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .post-header {
+    animation: slideDownIn 0.5s ease;
+    text-align: center;
+  }
+
+  @keyframes slideDownIn {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .post-background {
+    width: 100%;
+    height: 300px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    margin: 15px 0;
+  }
+
+  .post-body {
+    animation: slideDownIn 0.5s ease 0.1s both;
+  }
+
+  .post-title {
+    font-size: 26px;
+    font-weight: 700;
+    margin: 0;
+    color: #222;
+  }
+
+  .post-title-link {
+    color: #222;
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+
+  .post-title-link:hover {
+    color: #555;
+  }
+
+  .post-meta {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #999;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .post-meta-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .post-meta-item-icon {
+    margin-right: 3px;
+  }
+
+  .post-meta-divider {
+    margin: 0 8px;
+  }
+
+  .post-time,
+  .post-updated,
+  .post-wordcount,
+  .post-author,
+  .post-category {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .post-author a,
+  .post-category a {
+    color: #999;
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+
+  .post-author a:hover,
+  .post-category a:hover {
+    color: #222;
+  }
+
+  .post-body {
+    margin-top: 20px;
+    color: #555;
+    line-height: 1.8;
+  }
+
+  .post-excerpt,
+  .post-content {
+    text-align: left;
+  }
+
+  .post-excerpt {
+    text-indent: 2em;
+  }
+
+  .post-content {
+    /* Content styles */
+  }
+  .post-content :global(h1),
+  .post-content :global(h2),
+  .post-content :global(h3),
+  .post-content :global(h4),
+  .post-content :global(h5),
+  .post-content :global(h6) {
+    margin-top: 1em;
+    margin-bottom: 0.5em;
+    font-weight: 600;
+    color: #222;
+  }
+
+  .post-content :global(p) {
+    margin-bottom: 1em;
+  }
+
+  .post-content :global(pre) {
+    background: #fafafa !important;
+    border: 1px solid #e1e1e1;
+    border-radius: 4px;
+    padding: 15px;
+    overflow-x: auto;
+    margin-bottom: 1em;
+    display: block !important;
+  }
+
+  .post-content :global(pre code) {
+    background: transparent !important;
+    padding: 0 !important;
+    color: #383a42 !important;
+    font-size: 14px;
+    line-height: 1.5;
+    display: block !important;
+  }
+
+  /* Inline code - purple-red color */
+  .post-content :global(p code),
+  .post-content :global(li code) {
+    color: #c7254e !important;
+    background: #f9f2f4;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.9em;
+  }
+
+  /* CRITICAL: Override for code blocks */
+  .post-content :global(pre code) {
+    color: #383a42 !important;
+    background: transparent !important;
+    padding: 0 !important;
+    display: block !important;
+  }
+
+  .post-content :global(blockquote) {
+    border-left: 4px solid #222;
+    padding-left: 15px;
+    margin: 1em 0;
+    color: #666;
+    font-style: italic;
+  }
+
+  .post-content :global(ul),
+  .post-content :global(ol) {
+    margin-bottom: 1em;
+    padding-left: 2em;
+  }
+
+  .post-button {
+    margin-top: 8px;
+    margin-bottom: 8px;
+  }
+
+  .btn {
+    display: inline-block;
+    padding: 10px 30px;
+    color: #222;
+    font-weight: bold;
+    text-decoration: underline;
+    transition: color 0.3s;
+    background: transparent;
+  }
+
+  .btn:hover {
+    color: #555;
+  }
+
+  .post-eof {
+    height: 1px;
+    margin: 0 0 0 0;
+    background: #eee;
+  }
+
+  .post-tags {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+    margin-bottom: 8px;
+  }
+
+  .tag-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    font-size: 13px;
+    color: #555;
+    text-decoration: none;
+    background: #f5f5f5;
+    border-radius: 12px;
+    transition: all 0.3s;
+  }
+
+  .tag-item:hover {
+    background: #e0e0e0;
+    color: #222;
+  }
+
+  .tag-item i {
+    font-size: 11px;
+  }
+</style>

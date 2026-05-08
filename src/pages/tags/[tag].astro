@@ -1,0 +1,123 @@
+---
+import NextLayout from '../../layouts/NextLayout.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const allPosts = await getCollection('posts');
+  const tags = new Set<string>();
+
+  allPosts.forEach((post) => {
+    (post.data.tags || []).forEach((tag) => tags.add(tag));
+  });
+
+  return Array.from(tags).map((tag) => ({
+    params: { tag },
+  }));
+}
+
+const { tag } = Astro.params;
+const allPosts = await getCollection('posts');
+const tagPosts = allPosts.filter((post) =>
+  (post.data.tags || []).includes(tag)
+).sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+---
+
+<NextLayout title={`标签: ${tag}`}>
+  <div class="tag-page">
+    <div class="tag-inner">
+      <h1 class="tag-title">
+        <i class="fa fa-tag"></i> {tag}
+      </h1>
+
+      {tagPosts.length === 0 ? (
+        <div class="tag-empty">
+          <p>该标签下没有文章</p>
+        </div>
+      ) : (
+        <div class="tag-posts">
+          {tagPosts.map((post) => (
+            <article class="post-item">
+              <a href={`/blog/${post.slug}/`} class="post-link">
+                <span class="post-date">
+                  {new Date(post.data.pubDate).toLocaleDateString('zh-CN')}
+                </span>
+                <span class="post-title">{post.data.title}</span>
+              </a>
+            </article>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+</NextLayout>
+
+<style>
+  .tag-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px 20px;
+  }
+
+  .tag-inner {
+    background: #fff;
+    padding: 40px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .tag-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 0 25px;
+    color: #222;
+  }
+
+  .tag-title i {
+    color: #999;
+    margin-right: 10px;
+  }
+
+  .tag-empty {
+    text-align: center;
+    padding: 40px 0;
+    color: #999;
+  }
+
+  .tag-posts {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .post-item {
+    border-bottom: 1px solid #eee;
+  }
+
+  .post-item:last-child {
+    border-bottom: none;
+  }
+
+  .post-link {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 0;
+    text-decoration: none;
+    color: #333;
+    transition: all 0.3s;
+  }
+
+  .post-link:hover {
+    color: #222;
+  }
+
+  .post-date {
+    color: #999;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .post-title {
+    font-size: 16px;
+    font-weight: 500;
+  }
+</style>

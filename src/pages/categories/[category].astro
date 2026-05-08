@@ -1,0 +1,130 @@
+---
+import NextLayout from '../../layouts/NextLayout.astro';
+
+const { category } = Astro.params;
+
+// Fetch category posts from API
+interface CategoryData {
+  category: { id: string; name: string; slug: string; description?: string } | null;
+  posts: Array<{
+    id: string;
+    title: string;
+    slug: string;
+    excerpt?: string;
+    pubDate: Date;
+  }>;
+}
+
+let categoryData: CategoryData = { category: null, posts: [] };
+try {
+  const response = await fetch(`http://localhost:3002/api/categories/${category}/posts`);
+  if (response.ok) {
+    const data = await response.json();
+    categoryData = data;
+  }
+} catch (e) {
+  console.warn('Failed to fetch category posts from API');
+}
+
+const { category: categoryInfo, posts: categoryPosts } = categoryData;
+---
+
+<NextLayout title={`分类: ${categoryInfo?.name || category}`}>
+  <div class="category-page">
+    <div class="category-inner">
+      <h1 class="category-title">
+        <i class="fa-solid fa-layer-group"></i> {categoryInfo?.name || category}
+      </h1>
+
+      {categoryPosts.length === 0 ? (
+        <div class="category-empty">
+          <p>该分类下没有文章</p>
+        </div>
+      ) : (
+        <div class="category-posts">
+          {categoryPosts.map((post) => (
+            <article class="post-item">
+              <a href={`/blog/${post.slug}/`} class="post-link">
+                <span class="post-date">
+                  {new Date(post.pubDate).toLocaleDateString('zh-CN')}
+                </span>
+                <span class="post-title">{post.title}</span>
+              </a>
+            </article>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+</NextLayout>
+
+<style>
+  .category-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px 20px;
+  }
+
+  .category-inner {
+    background: #fff;
+    padding: 40px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .category-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 0 25px;
+    color: #222;
+  }
+
+  .category-title i {
+    color: #999;
+    margin-right: 10px;
+  }
+
+  .category-empty {
+    text-align: center;
+    padding: 40px 0;
+    color: #999;
+  }
+
+  .category-posts {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .post-item {
+    border-bottom: 1px solid #eee;
+  }
+
+  .post-item:last-child {
+    border-bottom: none;
+  }
+
+  .post-link {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 0;
+    text-decoration: none;
+    color: #333;
+    transition: all 0.3s;
+  }
+
+  .post-link:hover {
+    color: #222;
+  }
+
+  .post-date {
+    color: #999;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .post-title {
+    font-size: 16px;
+    font-weight: 500;
+  }
+</style>

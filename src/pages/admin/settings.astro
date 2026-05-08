@@ -1,0 +1,217 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+
+export const prerender = false;
+---
+
+<AdminLayout title="主页管理 - Admin">
+  <div class="admin-container">
+    <div class="admin-sidebar">
+      <h1>晰听的BLOG</h1>
+      <nav class="admin-nav">
+        <a href="/admin">文章列表</a>
+        <a href="/admin/new">新建文章</a>
+        <a href="/admin/settings" class="active">主页管理</a>
+        <a href="#" id="logoutBtn">退出登录</a>
+      </nav>
+    </div>
+    <div class="admin-main">
+      <div class="admin-header">
+        <h2>主页管理</h2>
+      </div>
+
+      <div class="card">
+        <h3>主页配置</h3>
+
+        <div class="form-group">
+          <label>每页文章数量</label>
+          <select id="postsPerPage" class="form-control">
+            <option value="2">2篇/页</option>
+            <option value="3">3篇/页</option>
+            <option value="4">4篇/页</option>
+            <option value="5">5篇/页</option>
+            <option value="6">6篇/页</option>
+            <option value="7">7篇/页</option>
+            <option value="8">8篇/页</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>置顶文章</label>
+          <select id="pinnedPost" class="form-control">
+            <option value="">无置顶文章</option>
+          </select>
+        </div>
+
+        <button id="saveSettings" class="btn btn-primary">保存配置</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var API_BASE = 'http://localhost:3002';
+
+    // Check authentication
+    function checkAuth() {
+      fetch(API_BASE + '/api/admin/auth/session', { credentials: 'include' })
+        .then(function(res) {
+          if (!res.ok) {
+            window.location.href = '/admin/login';
+          }
+        })
+        .catch(function() {
+          window.location.href = '/admin/login';
+        });
+    }
+
+    // Load settings
+    function loadSettings() {
+      // Load all settings from API
+      fetch(API_BASE + '/api/admin/settings', { credentials: 'include' })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          // Set posts per page
+          if (data.postsPerPage) {
+            const postsPerPageEl = document.getElementById('postsPerPage');
+            if (postsPerPageEl instanceof HTMLSelectElement) {
+              postsPerPageEl.value = data.postsPerPage;
+            }
+          }
+        })
+        .catch(function(err) {
+          console.error('Failed to load settings:', err);
+        });
+
+      // Load posts list for pinned post dropdown
+      fetch(API_BASE + '/api/admin/posts', { credentials: 'include' })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          var pinnedSelect = document.getElementById('pinnedPost');
+
+          if (pinnedSelect instanceof HTMLSelectElement) {
+            // Clear existing options (keep the first "no pinned post" option from HTML)
+            while (pinnedSelect.options.length > 1) {
+              pinnedSelect.remove(1);
+            }
+
+            // Load pinned post setting to determine which post is selected
+            fetch(API_BASE + '/api/admin/settings', { credentials: 'include' })
+              .then(function(res) { return res.json(); })
+              .then(function(settings) {
+                var pinnedPostId = settings.pinnedPost ? settings.pinnedPost.id : '';
+
+                data.posts.forEach(function(post) {
+                  var option = document.createElement('option');
+                  option.value = post.id;
+                  option.textContent = post.title;
+                  if (post.id === pinnedPostId) {
+                    option.selected = true;
+                  }
+                  pinnedSelect.appendChild(option);
+                });
+              });
+          }
+        })
+        .catch(function(err) {
+          console.error('Failed to load posts:', err);
+        });
+    }
+
+    // Save settings
+    function saveSettings() {
+      var postsPerPageEl = document.getElementById('postsPerPage');
+      var pinnedPostEl = document.getElementById('pinnedPost');
+
+      if (!(postsPerPageEl instanceof HTMLSelectElement) || !(pinnedPostEl instanceof HTMLSelectElement)) {
+        console.error('Required elements not found');
+        return;
+      }
+
+      var postsPerPage = postsPerPageEl.value;
+      var pinnedPost = pinnedPostEl.value;
+
+      console.log('Saving settings with postsPerPage:', postsPerPage, 'pinnedPost:', pinnedPost);
+
+      // Save posts per page setting
+      fetch(API_BASE + '/api/admin/settings/posts-per-page', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ postsPerPage: parseInt(postsPerPage) })
+      })
+      .then(function(res) {
+        console.log('Response status:', res.status, 'ok:', res.ok);
+        if (!res.ok) {
+          return res.text().then(function(text) {
+            console.error('Error response text:', text);
+            var data;
+            try {
+              data = JSON.parse(text);
+            } catch(e) {
+              throw new Error('保存失败: 服务器返回非JSON响应');
+            }
+            throw new Error(data.error || '保存失败');
+          });
+        }
+        return res.json();
+      })
+      .then(function(data) {
+        console.log('Successfully saved postsPerPage:', data);
+        // Save pinned post setting
+        return fetch(API_BASE + '/api/admin/settings/pin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ postId: pinnedPost })
+        });
+      })
+      .then(function(res) {
+        console.log('Pin response status:', res.status, 'ok:', res.ok);
+        if (!res.ok) {
+          return res.text().then(function(text) {
+            console.error('Pin error response text:', text);
+            var data;
+            try {
+              data = JSON.parse(text);
+            } catch(e) {
+              throw new Error('保存置顶文章失败: 服务器返回非JSON响应');
+            }
+            throw new Error(data.error || '保存置顶文章失败');
+          });
+        }
+        return res.json();
+      })
+      .then(function(data) {
+        console.log('Successfully saved pinned post:', data);
+        if (data.success) {
+          alert('配置保存成功！');
+        } else {
+          alert(data.error || '保存失败');
+        }
+      })
+      .catch(function(err) {
+        console.error('Save error:', err);
+        alert('保存失败: ' + err.message);
+      });
+    }
+
+    // Logout
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('logoutBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        fetch(API_BASE + '/api/admin/auth/logout', {
+          method: 'POST',
+          credentials: 'include'
+        }).then(function() {
+          window.location.href = '/admin/login';
+        });
+      });
+
+      document.getElementById('saveSettings').addEventListener('click', saveSettings);
+
+      // Initialize
+      checkAuth();
+      loadSettings();
+    });
+  </script>
+</AdminLayout>

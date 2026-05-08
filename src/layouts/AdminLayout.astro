@@ -1,0 +1,359 @@
+---
+interface Props {
+  title?: string;
+}
+
+const { title = 'Admin - 晰听的BLOG' } = Astro.props;
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde@2.18.0/dist/easymde.min.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet" />
+    <!-- Code highlighting - Xcode Light style (using atom-one-light) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/atom-one-light.min.css" />
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+    <style is:global>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: #f5f5f5;
+      }
+      .admin-container {
+        display: flex;
+        min-height: 100vh;
+      }
+      .admin-sidebar {
+        width: 240px;
+        background: #222;
+        color: #fff;
+        padding: 20px 0;
+      }
+      .admin-sidebar h1 {
+        margin: 0 0 30px;
+        padding: 0 20px;
+        font-size: 20px;
+      }
+      .admin-nav a {
+        display: block;
+        padding: 12px 20px;
+        color: #ccc;
+        text-decoration: none;
+        transition: all 0.2s;
+      }
+      .admin-nav a:hover,
+      .admin-nav a.active {
+        background: #333;
+        color: #fff;
+      }
+      .admin-main {
+        flex: 1;
+        padding: 30px;
+      }
+      .admin-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+      }
+      .admin-header h2 {
+        margin: 0;
+        font-size: 24px;
+      }
+      .btn {
+        padding: 10px 20px;
+        background: #222;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 14px;
+      }
+      .btn:hover {
+        background: #333;
+      }
+      .btn-primary {
+        background: #007bff;
+      }
+      .btn-primary:hover {
+        background: #0056b3;
+      }
+      .btn-danger {
+        background: #dc3545;
+      }
+      .btn-danger:hover {
+        background: #a71d2a;
+      }
+      .card {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+      .form-group {
+        margin-bottom: 20px;
+      }
+      .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+      }
+      .form-control {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+      }
+      .form-control:focus {
+        outline: none;
+        border-color: #007bff;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th, td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+      }
+      th {
+        font-weight: 600;
+        color: #555;
+      }
+      .badge {
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+      }
+      .badge-published {
+        background: #d4edda;
+        color: #155724;
+      }
+      .badge-draft {
+        background: #fff3cd;
+        color: #856404;
+      }
+      .login-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+      }
+      .login-box {
+        width: 400px;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        padding: 40px;
+      }
+      .login-box h1 {
+        margin: 0 0 30px;
+        text-align: center;
+        color: #222;
+      }
+
+      /* Code styling - reset first */
+      code {
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      }
+
+      /* Code blocks - use atom-one-light theme colors */
+      pre {
+        background: #fafafa;
+        border: 1px solid #e1e1e1;
+        border-radius: 4px;
+        padding: 15px;
+        overflow-x: auto;
+        display: block !important;
+      }
+
+      pre code {
+        color: #383a42 !important;
+        background: transparent !important;
+        padding: 0 !important;
+        font-size: 14px;
+        line-height: 1.5;
+        display: block !important;
+      }
+
+      /* Inline code - purple-red color (#c7254e) */
+      /* Use more specific selectors to avoid matching HTML tags */
+      p code, li code, td code, th code,
+      .editor-preview code,
+      h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {
+        color: #c7254e !important;
+        background: #f9f2f4;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 0.9em;
+      }
+
+      /* CRITICAL: Override for code blocks */
+      pre code {
+        color: #383a42 !important;
+        background: transparent !important;
+        padding: 0 !important;
+        display: block !important;
+      }
+
+      /* EasyMDE preview specific styles */
+      .EasyMDEContainer .editor-preview pre code {
+        color: #383a42 !important;
+        background: transparent !important;
+        padding: 0 !important;
+        display: block !important;
+      }
+
+      .EasyMDEContainer .editor-preview p code,
+      .EasyMDEContainer .editor-preview li code {
+        color: #c7254e !important;
+        background: #f9f2f4;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 0.9em;
+      }
+
+      /* EasyMDE preview styling to match actual rendering */
+      .EasyMDEContainer .editor-preview {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        line-height: 1.8;
+        color: #555;
+        background: #fff;
+        padding: 15px;
+      }
+
+      .EasyMDEContainer .editor-preview-sided {
+        padding: 15px;
+        background: #fff;
+      }
+
+      .EasyMDEContainer .editor-preview h1,
+      .EasyMDEContainer .editor-preview h2,
+      .EasyMDEContainer .editor-preview h3,
+      .EasyMDEContainer .editor-preview h4,
+      .EasyMDEContainer .editor-preview h5,
+      .EasyMDEContainer .editor-preview h6 {
+        color: #222;
+        font-weight: 600;
+        margin-top: 1.5em;
+        margin-bottom: 0.5em;
+      }
+
+      .EasyMDEContainer .editor-preview h1 {
+        font-size: 26px;
+      }
+
+      .EasyMDEContainer .editor-preview h2 {
+        font-size: 22px;
+      }
+
+      .EasyMDEContainer .editor-preview h3 {
+        font-size: 18px;
+      }
+
+      /* Blockquotes in EasyMDE preview */
+      .EasyMDEContainer .editor-preview blockquote.note {
+        margin: 1em 0;
+        padding: 10px 15px;
+        border-left: 6px solid #222;
+        background: #f5f5f5;
+        border-radius: 4px;
+      }
+
+      .EasyMDEContainer .editor-preview blockquote.info {
+        margin: 1em 0;
+        padding: 10px 15px;
+        border-left: 6px solid #5bc0de;
+        background: #f5f9fc;
+        border-radius: 4px;
+      }
+
+      .EasyMDEContainer .editor-preview blockquote.warning {
+        margin: 1em 0;
+        padding: 10px 15px;
+        border-left: 6px solid #f0ad4e;
+        background: #fff8f0;
+        border-radius: 4px;
+      }
+
+      .EasyMDEContainer .editor-preview blockquote.danger {
+        margin: 1em 0;
+        padding: 10px 15px;
+        border-left: 6px solid #d534f;
+        background: #fdf5f5;
+        border-radius: 4px;
+      }
+
+      /* Inline label tags in EasyMDE preview */
+      .EasyMDEContainer .editor-preview span.label,
+      .EasyMDEContainer .editor-preview span.labelred,
+      .EasyMDEContainer .editor-preview span.labelinfo {
+        display: inline;
+        margin: 0;
+        padding: 0;
+        border: none;
+        border-radius: 0;
+        font-size: 14px;
+      }
+
+      .EasyMDEContainer .editor-preview span.label {
+        background: #f5f5f5;
+        color: #333;
+      }
+
+      .EasyMDEContainer .editor-preview span.labelred {
+        background: #fff0f0;
+        color: #333;
+      }
+
+      .EasyMDEContainer .editor-preview span.labelinfo {
+        background: #f0f8ff;
+        color: #333;
+      }
+
+      /* EasyMDE preview specific styles */
+      .EasyMDEContainer .editor-preview pre {
+        background: #fafafa !important;
+        border: 1px solid #e1e1e1;
+        border-radius: 4px;
+        padding: 15px;
+        overflow-x: auto;
+        display: block !important;
+      }
+
+      .EasyMDEContainer .editor-preview pre code {
+        background: transparent !important;
+        padding: 0 !important;
+        color: #383a42 !important;
+        font-size: 14px;
+        line-height: 1.5;
+        display: block !important;
+      }
+
+      .EasyMDEContainer .editor-preview p code,
+      .EasyMDEContainer .editor-preview li code {
+        color: #c7254e !important;
+        background: #f9f2f4;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 0.9em;
+      }
+    </style>
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

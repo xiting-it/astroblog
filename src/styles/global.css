@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-800 antialiased;
+  }
+
+  .dark body {
+    @apply bg-slate-950 text-slate-200;
+  }
+}
+
+@layer components {
+  .container-custom {
+    @apply mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl;
+  }
+
+  .prose-custom {
+    @apply max-w-none prose prose-slate dark:prose-invert prose-headings:font-semibold prose-a:text-slate-900 dark:prose-a:text-slate-100 prose-a:no-underline hover:prose-a:underline prose-pre:bg-slate-900 dark:prose-pre:bg-slate-950;
+  }
+
+  /* Custom inline label styles - 高亮效果（更浅，圆角6px） */
+  .labelgreen {
+    @apply px-1 bg-green-50 text-gray-900 rounded-md inline;
+  }
+
+  .labelred {
+    @apply px-1 bg-red-50 text-gray-900 rounded-md inline;
+  }
+
+  .labelblue {
+    @apply px-1 bg-blue-50 text-gray-900 rounded-md inline;
+  }
+
+  .labelyellow {
+    @apply px-1 bg-yellow-50 text-gray-900 rounded-md inline;
+  }
+
+  .labelgrey {
+    @apply px-1 bg-gray-100 text-gray-900 rounded-md inline;
+  }
+
+  .labelpink {
+    @apply px-1 bg-pink-50 text-gray-900 rounded-md inline;
+  }
+
+  .labelorange {
+    @apply px-1 bg-orange-50 text-gray-900 rounded-md inline;
+  }
+}

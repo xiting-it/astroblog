@@ -1,0 +1,450 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+
+export const prerender = false;
+---
+
+<AdminLayout title="文章管理 - Admin">
+  <div class="admin-container">
+    <div class="admin-sidebar">
+      <h1>晰听的BLOG</h1>
+      <nav class="admin-nav">
+        <a href="/admin" class="active">文章列表</a>
+        <a href="/admin/new">新建文章</a>
+        <a href="/admin/settings">主页管理</a>
+        <a href="#" id="logoutBtn">退出登录</a>
+      </nav>
+    </div>
+    <div class="admin-main">
+      <div class="admin-header">
+        <h2>文章列表</h2>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <button id="refreshBtn" onclick="loadPosts()" class="btn btn-info" style="padding: 8px 16px;">
+            <i class="fa-solid fa-rotate"></i> 刷新
+          </button>
+          <a href="/admin/new" class="btn btn-primary">新建文章</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <table>
+          <thead>
+            <tr>
+              <th>标题</th>
+              <th>状态</th>
+              <th>分类</th>
+              <th>隐藏</th>
+              <th>发布时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="postsList">
+            <tr>
+              <td colspan="6" style="text-align: center; color: #999;">加载中...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+  <script>
+    var API_BASE = 'http://localhost:3002';
+
+    // HTML escape function for safe rendering
+    function escapeHtml(unsafe) {
+      if (typeof unsafe !== 'string') return unsafe;
+      return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // Attribute escape function for attributes
+    function escapeAttr(unsafe) {
+      if (typeof unsafe !== 'string') return unsafe;
+      return escapeHtml(unsafe).replace(/"/g, "&quot;");
+    }
+
+    // Check authentication
+    function checkAuth() {
+      fetch(API_BASE + '/api/admin/auth/session', { credentials: 'include' })
+        .then(function(res) {
+          if (!res.ok) {
+            window.location.href = '/admin/login';
+          }
+        })
+        .catch(function() {
+          window.location.href = '/admin/login';
+        });
+    }
+
+    // Load posts
+    function loadPosts() {
+      fetch(API_BASE + '/api/admin/posts', { credentials: 'include' })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          var tbody = document.getElementById('postsList');
+
+          if (data.posts.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #999;">暂无文章</td></tr>';
+            return;
+          }
+
+          // Load categories for all posts
+          Promise.all(data.posts.map(function(post) {
+            return fetch(API_BASE + '/api/admin/posts/' + post.id + '/categories', { credentials: 'include' })
+              .then(function(res) { return res.json(); })
+              .then(function(catData) {
+                post.categories = catData.categories || [];
+                return post;
+              })
+              .catch(function() {
+                post.categories = [];
+                return post;
+              });
+          })).then(function(postsWithCategories) {
+            tbody.innerHTML = postsWithCategories.map(function(post) {
+              var categoryNames = post.categories.map(function(cat) { return cat.name; }).join(', ') || '未分类';
+              // Handle date parsing - pubDate could be Date object, string, or number
+              var pubDate;
+              if (post.pubDate instanceof Date) {
+                pubDate = post.pubDate;
+              } else if (typeof post.pubDate === 'string') {
+                pubDate = new Date(post.pubDate);
+              } else if (typeof post.pubDate === 'number') {
+                pubDate = new Date(post.pubDate);
+              } else {
+                pubDate = new Date();
+              }
+
+              var pubDateStr = !isNaN(pubDate.getTime()) ? pubDate.toLocaleString('zh-CN') : '未知';
+
+              return '<tr>' +
+                '<td>' + escapeHtml(post.title) + '</td>' +
+                '<td><span class="badge badge-' + escapeHtml(post.status) + '">' + (post.status === 'published' ? '已发布' : '草稿') + '</span></td>' +
+                '<td>' + escapeHtml(categoryNames) + '</td>' +
+                '<td>' + (post.hidden ? '<span class="badge badge-warning">已隐藏</span>' : '未隐藏') + '</td>' +
+                '<td>' + escapeHtml(pubDateStr) + '</td>' +
+                '<td>' +
+                  '<a href="/admin/edit/' + escapeHtml(post.id) + '" class="btn" style="padding: 5px 10px; font-size: 12px;">编辑</a> ' +
+                  '<button onclick="editCategories(\'' + escapeHtml(post.id) + '\', ' + JSON.stringify(post.title) + ')" class="btn btn-info" style="padding: 5px 10px; font-size: 12px;">分类</button> ' +
+                  '<button onclick="toggleHidden(\'' + escapeHtml(post.id) + '\', ' + post.hidden + ')" class="btn ' + (post.hidden ? 'btn-success' : 'btn-warning') + '" style="padding: 5px 10px; font-size: 12px;">' + (post.hidden ? '取消隐藏' : '隐藏') + '</button> ' +
+                  '<button onclick="changeDate(\'' + escapeHtml(post.id) + '\')" class="btn btn-info" style="padding: 5px 10px; font-size: 12px;">更改发布日期</button> ' +
+                  '<button onclick="deletePost(\'' + escapeHtml(post.id) + '\')" class="btn btn-danger" style="padding: 5px 10px; font-size: 12px;">删除</button>' +
+                '</td>' +
+              '</tr>';
+            }).join('');
+          });
+        })
+        .catch(function(err) {
+          console.error(err);
+        });
+    }
+
+    // Delete post
+    window.deletePost = function(id) {
+      if (!confirm('确定要删除这篇文章吗？')) return;
+
+      fetch(API_BASE + '/api/admin/posts/' + id, {
+        method: 'DELETE',
+        credentials: 'include'
+      })
+      .then(function(res) {
+        if (res.ok) {
+          loadPosts();
+        } else {
+          alert('删除失败');
+        }
+      })
+      .catch(function() {
+        alert('删除失败');
+      });
+    };
+
+    // Toggle hidden post
+    window.toggleHidden = function(id, currentHidden) {
+      var action = currentHidden ? '取消隐藏' : '隐藏';
+      if (!confirm('确定要' + action + '这篇文章吗？' + (currentHidden ? '取消隐藏后文章将在主页、分类、标签、归档页面中显示。' : '隐藏后文章不会在主页、分类、标签、归档页面中显示。'))) return;
+
+      fetch(API_BASE + '/api/admin/posts/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ hidden: !currentHidden })
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (data.success) {
+          alert(action + '成功！');
+          loadPosts();
+        } else {
+          alert(data.error || action + '失败');
+        }
+      })
+      .catch(function() {
+        alert(action + '失败');
+      });
+    };
+
+    // Change post date
+    window.changeDate = function(id) {
+      // Create date picker modal
+      var modalHtml = '<div id="datePickerModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 9999;">' +
+        '<div style="background: white; padding: 20px; border-radius: 8px; min-width: 300px; position: relative; z-index: 10000;">' +
+        '<h3 style="margin-top: 0;">修改发布日期</h3>' +
+        '<div style="margin-bottom: 15px; position: relative; z-index: 10001;">' +
+        '<label>年份：</label>' +
+        '<select id="dateYear" style="padding: 5px; min-width: 80px; position: relative; z-index: 10002;">';
+      for (var y = 2020; y <= 2030; y++) {
+        modalHtml += '<option value="' + y + '">' + y + '</option>';
+      }
+      modalHtml += '</select>' +
+        '</div>' +
+        '<div style="margin-bottom: 15px; position: relative; z-index: 10001;">' +
+        '<label>月份：</label>' +
+        '<select id="dateMonth" style="padding: 5px; min-width: 80px; position: relative; z-index: 10002;">';
+      for (var m = 1; m <= 12; m++) {
+        modalHtml += '<option value="' + m + '">' + m + '</option>';
+      }
+      modalHtml += '</select>' +
+        '</div>' +
+        '<div style="margin-bottom: 15px; position: relative; z-index: 10001;">' +
+        '<label>日期：</label>' +
+        '<select id="dateDay" style="padding: 5px; min-width: 80px; position: relative; z-index: 10002;">';
+      for (var d = 1; d <= 31; d++) {
+        modalHtml += '<option value="' + d + '">' + d + '</option>';
+      }
+      modalHtml += '</select>' +
+        '</div>' +
+        '<div style="text-align: right; position: relative; z-index: 10001;">' +
+        '<button onclick="closeDatePicker()" style="padding: 8px 16px; margin-right: 10px; cursor: pointer; position: relative; z-index: 10002;">取消</button>' +
+        '<button onclick="saveDate(\'' + id + '\')" style="padding: 8px 16px; background: #222; color: white; border: none; cursor: pointer; position: relative; z-index: 10002;">确定</button>' +
+        '</div>' +
+        '</div>' +
+        '</div>';
+
+      document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+      // Set current date as default
+      var now = new Date();
+      document.getElementById('dateYear').value = now.getFullYear();
+      document.getElementById('dateMonth').value = now.getMonth() + 1;
+      document.getElementById('dateDay').value = now.getDate();
+    };
+
+    window.closeDatePicker = function() {
+      var modal = document.getElementById('datePickerModal');
+      if (modal) {
+        modal.remove();
+      }
+    };
+
+    window.saveDate = function(id) {
+      var year = parseInt(document.getElementById('dateYear').value);
+      var month = parseInt(document.getElementById('dateMonth').value);
+      var day = parseInt(document.getElementById('dateDay').value);
+
+      var newDate = new Date(year, month - 1, day, 0, 0, 0);
+
+      if (isNaN(newDate.getTime())) {
+        alert('日期格式不正确');
+        return;
+      }
+
+      fetch(API_BASE + '/api/admin/posts/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ pubDate: newDate })
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (data.success) {
+          alert('发布日期更新成功！');
+          closeDatePicker();
+          loadPosts();
+        } else {
+          alert(data.error || '更新失败');
+        }
+      })
+      .catch(function() {
+        alert('更新失败');
+      });
+    };
+
+    // Edit categories
+    window.editCategories = function(postId, postTitle) {
+      // Load all categories
+      fetch(API_BASE + '/api/admin/categories', { credentials: 'include' })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          var categories = data.categories || [];
+
+          // Load post's current categories
+          return fetch(API_BASE + '/api/admin/posts/' + postId + '/categories', { credentials: 'include' })
+            .then(function(res) { return res.json(); })
+            .then(function(postCatData) {
+              var postCategories = postCatData.categories || [];
+              var postCategoryIds = postCategories.map(function(cat) { return cat.id; });
+
+              // Create modal HTML with safe escaping
+              var modalHtml = '<div id="categoryModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 9999;">' +
+                '<div style="background: white; padding: 20px; border-radius: 8px; min-width: 400px; max-width: 600px; max-height: 80vh; overflow-y: auto;">' +
+                '<h3 style="margin-top: 0;">分类设置 - ' + escapeHtml(postTitle) + '</h3>' +
+                '<div style="margin-bottom: 15px;">' +
+                '<label style="display: block; margin-bottom: 5px;">选择分类（可多选）：</label>' +
+                '<div id="categoryList" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 4px;">';
+
+              if (categories.length === 0) {
+                modalHtml += '<p style="color: #999; text-align: center;">暂无分类</p>';
+              } else {
+                categories.forEach(function(cat) {
+                  var checked = postCategoryIds.includes(cat.id) ? 'checked' : '';
+                  modalHtml += '<div style="margin-bottom: 5px;">' +
+                    '<label style="display: block; padding: 5px; cursor: pointer;">' +
+                    '<input type="checkbox" value="' + escapeAttr(cat.id) + '" ' + checked + ' data-category-name="' + escapeAttr(cat.name) + '"> ' +
+                    escapeHtml(cat.name) +
+                    '</label>' +
+                    '</div>';
+                });
+              }
+
+              modalHtml += '</div>' +
+                '</div>' +
+                '<div style="margin-bottom: 15px;">' +
+                '<label style="display: block; margin-bottom: 5px;">或创建新分类：</label>' +
+                '<div style="display: flex; gap: 10px;">' +
+                '<input type="text" id="newCategoryName" placeholder="分类名称" style="flex: 1; padding: 5px; border: 1px solid #ddd; border-radius: 4px;">' +
+                '<button onclick="createCategory()" style="padding: 5px 15px; background: #222; color: white; border: none; border-radius: 4px; cursor: pointer;">创建</button>' +
+                '</div>' +
+                '</div>' +
+                '<div style="text-align: right;">' +
+                '<button onclick="closeCategoryModal()" style="padding: 8px 16px; margin-right: 10px; cursor: pointer; border: 1px solid #ddd; background: white; border-radius: 4px;">取消</button>' +
+                '<button onclick="saveCategories(\'' + escapeHtml(postId) + '\')" style="padding: 8px 16px; background: #222; color: white; border: none; border-radius: 4px; cursor: pointer;">保存</button>' +
+                '</div>' +
+                '</div>' +
+                '</div>';
+
+              document.body.insertAdjacentHTML('beforeend', modalHtml);
+            });
+        })
+        .catch(function(err) {
+          console.error('Failed to load categories:', err);
+          alert('加载分类失败');
+        });
+    };
+
+    window.closeCategoryModal = function() {
+      var modal = document.getElementById('categoryModal');
+      if (modal) {
+        modal.remove();
+      }
+    };
+
+    window.createCategory = function() {
+      var name = document.getElementById('newCategoryName').value.trim();
+      if (!name) {
+        alert('请输入分类名称');
+        return;
+      }
+
+      // Generate slug from name (simple version)
+      var slug = name.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-').replace(/^-+|-+$/g, '');
+
+      fetch(API_BASE + '/api/admin/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ name: name, slug: slug })
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (data.success) {
+          // Refresh the modal
+          var modal = document.getElementById('categoryModal');
+          if (modal) {
+            modal.remove();
+          }
+          // Get current post ID from the modal
+          var postIdInput = document.querySelector('#categoryModal button[onclick^="saveCategories"]');
+          if (postIdInput) {
+            var postId = postIdInput.getAttribute('onclick').match(/saveCategories\('([^']+)'\)/)[1];
+            var postTitle = document.querySelector('#categoryModal h3').textContent.replace('分类设置 - ', '');
+            editCategories(postId, postTitle);
+          }
+        } else {
+          alert(data.error || '创建分类失败');
+        }
+      })
+      .catch(function() {
+        alert('创建分类失败');
+      });
+    };
+
+    window.saveCategories = function(postId) {
+      var checkboxes = document.querySelectorAll('#categoryList input[type="checkbox"]:checked');
+      var categoryIds = Array.from(checkboxes).map(function(cb) { return cb.value; });
+
+      fetch(API_BASE + '/api/admin/posts/' + postId + '/categories', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ categoryIds: categoryIds })
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (data.success) {
+          alert('分类保存成功！');
+          closeCategoryModal();
+          loadPosts();
+        } else {
+          alert(data.error || '保存分类失败');
+        }
+      })
+      .catch(function() {
+        alert('保存分类失败');
+      });
+    };
+
+    // Auto refresh interval
+    var refreshInterval;
+
+    // Logout
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('logoutBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        fetch(API_BASE + '/api/admin/auth/logout', {
+          method: 'POST',
+          credentials: 'include'
+        }).then(function() {
+          window.location.href = '/admin/login';
+        });
+      });
+
+      // Initialize
+      checkAuth();
+      loadPosts();
+
+      // Auto refresh every 30 seconds
+      refreshInterval = setInterval(function() {
+        loadPosts();
+      }, 30000);
+
+      // Refresh when page regains focus
+      window.addEventListener('focus', function() {
+        loadPosts();
+      });
+    });
+
+    // Clean up interval when page is unloaded
+    window.addEventListener('beforeunload', function() {
+      if (refreshInterval) {
+        clearInterval(refreshInterval);
+      }
+    });
+  </script>
+</AdminLayout>

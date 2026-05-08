@@ -1,0 +1,723 @@
+---
+import { unified } from 'unified';
+import remarkParse from 'remark-parse';
+import remarkRehype from 'remark-rehype';
+import rehypeStringify from 'rehype-stringify';
+import remarkDirective from 'remark-directive';
+import { customBlockquotes, customInlineLabels } from '../../../remark-custom-blockquotes.js';
+import NextLayout from '../../layouts/NextLayout.astro';
+import Giscus from '../../components/Giscus.astro';
+import Database from 'better-sqlite3';
+
+// Get slug from URL params
+const slug = Astro.params.slug;
+
+// Get post from database (use absolute path)
+const dbPath = '/root/astroblog/data/blog.db';
+const db = new Database(dbPath);
+
+// Query the database for the post
+const row = db.prepare('SELECT * FROM posts WHERE slug = ? AND status = ?').get(slug, 'published');
+
+if (!row) {
+  return new Response('Post not found', {
+    status: 404,
+    statusText: 'Not Found'
+  });
+}
+
+// Parse post data
+const post = {
+  id: row.id,
+  title: row.title,
+  slug: row.slug,
+  content: row.content,
+  excerpt: row.excerpt,
+  pubDate: new Date(row.pub_date),
+  updatedDate: row.updated_date ? new Date(row.updated_date) : null,
+  tags: row.tags ? JSON.parse(row.tags) : [],
+  backgroundImage: row.background_image,
+};
+
+db.close();
+
+// Process markdown with custom blockquotes using unified/remark
+const processor = unified()
+  .use(remarkParse)
+  .use(remarkDirective)
+  .use(customBlockquotes)
+  .use(remarkRehype, { allowDangerousHtml: true })
+  .use(rehypeStringify, { allowDangerousHtml: true });
+
+let htmlContent = await processor.process(post.content);
+
+// Apply custom label syntax via string replacement (simple and reliable)
+htmlContent = String(htmlContent)
+  .replace(/\[!labelgreen\]@([^@]+)@/g, '<span class="labelgreen">$1</span>')
+  .replace(/\[!labelred\]@([^@]+)@/g, '<span class="labelred">$1</span>')
+  .replace(/\[!labelblue\]@([^@]+)@/g, '<span class="labelblue">$1</span>')
+  .replace(/\[!labelyellow\]@([^@]+)@/g, '<span class="labelyellow">$1</span>')
+  .replace(/\[!labelgrey\]@([^@]+)@/g, '<span class="labelgrey">$1</span>')
+  .replace(/\[!labelpink\]@([^@]+)@/g, '<span class="labelpink">$1</span>')
+  .replace(/\[!labelorange\]@([^@]+)@/g, '<span class="labelorange">$1</span>');
+
+// Format dates
+const formattedDate = post.pubDate.toLocaleDateString('zh-CN', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+
+const formattedUpdatedDate = post.updatedDate
+  ? post.updatedDate.toLocaleDateString('zh-CN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
+  : null;
+
+// Get post ID for comments
+const postId = post.slug;
+
+// Get raw content for word count
+const rawContent = post.content?.trim() || '';
+const wordCount = rawContent.length;
+
+// Get all posts for navigation
+const db2 = new Database('/root/astroblog/data/blog.db');
+const allPosts = db2.prepare('SELECT * FROM posts WHERE status = ? ORDER BY pub_date DESC').all('published');
+db2.close();
+
+// Find current post index
+const currentIndex = allPosts.findIndex((p) => p.slug === post.slug);
+
+// Get previous and next posts
+const prevPost = currentIndex < allPosts.length - 1 ? allPosts[currentIndex + 1] : null;
+const nextPost = currentIndex > 0 ? allPosts[currentIndex - 1] : null;
+---
+
+<NextLayout title={post.title} description={post.excerpt || post.title}>
+  <div class="posts-expand">
+    <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+      <div class="post-block">
+        <header class="post-header">
+          <h1 class="post-title" itemprop="name headline">
+            {post.title}
+          </h1>
+
+          <div class="post-meta">
+            <!-- 第一行：创建日期和修改日期 -->
+            <div class="post-meta-row">
+              <span class="post-time">
+                <span class="post-meta-item-icon">
+                  <i class="fa-regular fa-calendar"></i>
+                </span>
+                <time title="创建时间" itemprop="dateCreated datePublished" datetime={formattedDate}>
+                  {formattedDate}
+                </time>
+              </span>
+
+              {formattedUpdatedDate && (
+                <span class="post-updated" style="margin-left: 4px;">
+                  <span class="post-meta-item-icon">
+                    <i class="fa-regular fa-calendar-plus"></i>
+                  </span>
+                  <time title="修改时间" itemprop="dateModified" datetime={formattedUpdatedDate}>
+                    {formattedUpdatedDate}
+                  </time>
+                </span>
+              )}
+            </div>
+
+            <!-- 第二行：字数 | 作者 -->
+            <div class="post-meta-row">
+              <span class="post-wordcount">
+                <span class="post-meta-item-icon">
+                  <i class="fa-regular fa-file-word"></i>
+                </span>
+                <span title="本文字数">{wordCount}字</span>
+              </span>
+
+              <span class="post-meta-divider">|</span>
+
+              <span class="post-author">
+                <span class="post-meta-item-icon">
+                  <i class="fa-regular fa-pen-to-square"></i>
+                </span>
+                <span title="作者">作者：Xiting</span>
+              </span>
+            </div>
+
+            <!-- 第三行：标签 -->
+            {post.tags && post.tags.length > 0 && (
+              <div class="post-meta-row">
+                <span class="post-tags-inline">
+                  <span class="post-meta-item-icon">
+                    <i class="fa-solid fa-layer-group"></i>
+                  </span>
+                  {post.tags?.map((tag, index) => (
+                    <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                      <a href={`/tags/${tag}`} itemprop="url" rel="index">
+                        <span itemprop="name">{tag}</span>
+                      </a>
+                      {index < (post.tags?.length || 0) - 1 && ', '}
+                    </span>
+                  ))}
+                </span>
+              </div>
+            )}
+          </div>
+        </header>
+
+        {post.backgroundImage && (
+          <div class="post-background" style={`background-image: url('${post.backgroundImage}')`}></div>
+        )}
+
+        <div class="post-body" itemprop="articleBody" set:html={htmlContent.toString()} />
+
+        <!-- Tags Section -->
+        {post.tags && post.tags.length > 0 && (
+          <div class="post-tags">
+            {post.tags.map((tag) => (
+              <a href={`/tags/${tag}`} class="tag-item">
+                <i class="fa-solid fa-tag"></i>
+                {tag}
+              </a>
+            ))}
+          </div>
+        )}
+
+        <!-- Navigation Section -->
+        <div class="post-navigation">
+          {prevPost && (
+            <a class="nav-btn prev-btn" href={`/blog/${prevPost.slug}`}>
+              <span class="nav-label">上一篇</span>
+              <span class="nav-title">{prevPost.title}</span>
+            </a>
+          )}
+
+          <a class="nav-btn home-btn" href="/">
+            <span class="nav-label">返回首页</span>
+          </a>
+
+          {nextPost && (
+            <a class="nav-btn next-btn" href={`/blog/${nextPost.slug}`}>
+              <span class="nav-label">下一篇</span>
+              <span class="nav-title">{nextPost.title}</span>
+            </a>
+          )}
+        </div>
+      </div>
+    </article>
+  </div>
+
+  <!-- Giscus 评论系统 -->
+  <div class="posts-expand comment-section">
+    <div class="comment-block">
+      <Giscus lang="zh-CN" theme="light" />
+    </div>
+  </div>
+</NextLayout>
+
+<style>
+  .posts-expand {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 40px 20px;
+  }
+
+  .post {
+    margin: 60px 0;
+  }
+
+  .post-block {
+    padding: 25px 42px;
+    background: #fff;
+    border-radius: 0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    animation: fadeIn 0.5s ease forwards;
+  }
+
+  .post-background {
+    width: 100%;
+    height: 300px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    margin: 15px 0;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .post-header {
+    animation: slideDownIn 0.5s ease;
+    text-align: center;
+  }
+
+  @keyframes slideDownIn {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .post-title {
+    font-size: 26px;
+    font-weight: 700;
+    margin: 0;
+    color: #222;
+    text-align: center;
+  }
+
+  .post-meta {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #999;
+    text-align: center;
+  }
+
+  .post-meta-item-icon {
+    margin-right: 5px;
+  }
+
+  .post-meta-divider {
+    margin: 0 8px;
+  }
+
+  .post-meta-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .post-meta-item-icon {
+    margin-right: 3px;
+  }
+
+  .post-time,
+  .post-updated,
+  .post-wordcount,
+  .post-author,
+  .post-tags-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .post-author a,
+  .post-tags-inline a {
+    color: #999;
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+
+  .post-author a:hover,
+  .post-tags-inline a:hover {
+    color: #222;
+  }
+
+  .post-body {
+    animation: slideDownIn 0.5s ease 0.1s both;
+    margin-top: 20px;
+    /* Vditor styles - 字体保持原有设置，不改动 */
+    color: #24292e;
+    word-wrap: break-word;
+    overflow: auto;
+    line-height: 1.5;
+    font-size: 16px;
+    word-break: break-word;
+  }
+
+  /* Vditor list styles - 移除字体设置 */
+  .post-body :global(ul ul ul) {
+    list-style-type: square;
+  }
+  .post-body :global(ul ul) {
+    list-style-type: circle;
+  }
+  .post-body :global(ul) {
+    list-style-type: disc;
+  }
+  .post-body :global(ul),
+  .post-body :global(ol) {
+    padding-left: 2em;
+    margin-top: 0;
+    margin-bottom: 16px;
+  }
+  .post-body :global(li + li) {
+    margin-top: 0.25em;
+  }
+
+  /* Vditor heading styles - 移除字体设置 */
+  .post-body :global(h1),
+  .post-body :global(h2),
+  .post-body :global(h3),
+  .post-body :global(h4),
+  .post-body :global(h5),
+  .post-body :global(h6) {
+    margin-top: 24px;
+    margin-bottom: 16px;
+    font-weight: 600;
+    line-height: 1.25;
+  }
+  .post-body :global(h1) {
+    font-size: 1.75em;
+  }
+  .post-body :global(h2) {
+    font-size: 1.55em;
+  }
+  .post-body :global(h3) {
+    font-size: 1.38em;
+  }
+  .post-body :global(h4) {
+    font-size: 1.25em;
+  }
+  .post-body :global(h5) {
+    font-size: 1.13em;
+  }
+  .post-body :global(h6) {
+    font-size: 1em;
+  }
+
+  /* Vditor hr styles */
+  .post-body :global(hr) {
+    height: 2px;
+    padding: 0;
+    margin: 24px 0;
+    background-color: #eaecef;
+    border: 0;
+  }
+
+  /* Vditor paragraph styles */
+  .post-body :global(p) {
+    margin-top: 0;
+    margin-bottom: 16px;
+  }
+
+  /* Vditor default blockquote styles */
+  .post-body :global(blockquote):not(.note):not(.primary):not(.success):not(.info):not(.warning):not(.danger):not(.flat) {
+    padding: 0 1em;
+    color: #6a737d;
+    border-left: 0.25em solid #eaecef;
+    margin: 16px 0;
+  }
+  .post-body :global(blockquote):not(.note):not(.primary):not(.success):not(.info):not(.warning):not(.danger):not(.flat) > :first-child {
+    margin-top: 0;
+  }
+  .post-body :global(blockquote):not(.note):not(.primary):not(.success):not(.info):not(.warning):not(.danger):not(.flat) > :last-child {
+    margin-bottom: 0;
+  }
+
+  /* Vditor table styles */
+  .post-body :global(table) {
+    border-collapse: collapse;
+    empty-cells: show;
+    margin-bottom: 16px;
+    border-spacing: 0;
+    display: table;
+    width: 100%;
+    overflow-x: auto;
+  }
+  .post-body :global(table tr) {
+    background-color: #fafbfc;
+    border-top: 1px solid #c6cbd1;
+    display: table-row;
+  }
+  .post-body :global(table td),
+  .post-body :global(table th) {
+    padding: 6px 13px;
+    border: 1px solid #dfe2e5;
+    word-break: normal;
+    display: table-cell;
+  }
+  .post-body :global(table th) {
+    font-weight: 600;
+  }
+  .post-body :global(table tbody tr:nth-child(2n)) {
+    background-color: #fff;
+  }
+
+  /* Vditor inline code styles - 移除字体设置 */
+  .post-body :global(code:not(.hljs):not(.highlight-chroma)) {
+    padding: 0.2em 0.4em;
+    margin: 0;
+    font-size: 85%;
+    border-radius: 3px;
+    word-break: break-word;
+    background-size: 20px 20px;
+    white-space: pre-wrap;
+    background-color: rgba(27, 31, 35, 0.05);
+  }
+
+  /* Vditor code block styles - 移除字体设置 */
+  .post-body :global(pre) {
+    margin: 1em 0;
+  }
+  .post-body :global(pre > code) {
+    margin: 0;
+    font-size: 85%;
+    padding: 0.5em;
+    border-radius: 5px;
+    display: block;
+    overflow: auto;
+    white-space: pre;
+    background-size: 20px 20px;
+    word-break: initial;
+    word-wrap: normal;
+    background-color: #f6f8fa;
+  }
+
+  /* Custom blockquote styles - note, info, warning, danger */
+  .post-body :global(blockquote.note),
+  .post-body :global(blockquote.info),
+  .post-body :global(blockquote.warning),
+  .post-body :global(blockquote.danger) {
+    margin: 32px 0 !important;
+    padding: 12px 16px;
+    border-left: 8px solid;
+    background: #f5f5f5;
+    border-radius: 0;
+    line-height: 1.6;
+  }
+
+  .post-body :global(blockquote.note) {
+    border-left-color: #777;
+    background: #f0f0f0;
+  }
+
+  .post-body :global(blockquote.info) {
+    border-left-color: #5bc0de;
+    background: #e3f2fd;
+  }
+
+  .post-body :global(blockquote.warning) {
+    border-left-color: #f0ad4e;
+    background: #fff3e0;
+  }
+
+  .post-body :global(blockquote.danger) {
+    border-left-color: #dc3545;
+    background: #ffebee;
+  }
+
+  /* Fix note/info/warning/danger 内部元素的间距 */
+  .post-body :global(blockquote.note > *:first-child),
+  .post-body :global(blockquote.info > *:first-child),
+  .post-body :global(blockquote.warning > *:first-child),
+  .post-body :global(blockquote.danger > *:first-child) {
+    margin-top: 0 !important;
+  }
+
+  .post-body :global(blockquote.note > *:last-child),
+  .post-body :global(blockquote.info > *:last-child),
+  .post-body :global(blockquote.warning > *:last-child),
+  .post-body :global(blockquote.danger > *:last-child) {
+    margin-bottom: 0 !important;
+  }
+
+  /* Custom label tag styles - 高亮效果（荧光笔）*/
+  .post-body :global(span.labelgreen),
+  .post-body :global(span.labelred),
+  .post-body :global(span.labelblue),
+  .post-body :global(span.labelyellow),
+  .post-body :global(span.labelgrey),
+  .post-body :global(span.labelpink),
+  .post-body :global(span.labelorange) {
+    display: inline !important;
+    padding: 0 3px !important;
+    border-radius: 6px !important;
+    font-size: inherit !important;
+    margin: 0 !important;
+    line-height: inherit !important;
+  }
+
+  .post-body :global(span.labelgreen) {
+    background: #e8f5e9 !important;
+    color: #333 !important;
+  }
+
+  .post-body :global(span.labelred) {
+    background: #ffebee !important;
+    color: #333 !important;
+  }
+
+  .post-body :global(span.labelblue) {
+    background: #e3f2fd !important;
+    color: #333 !important;
+  }
+
+  .post-body :global(span.labelyellow) {
+    background: #fffde7 !important;
+    color: #333 !important;
+  }
+
+  .post-body :global(span.labelgrey) {
+    background: #f5f5f5 !important;
+    color: #333 !important;
+  }
+
+  .post-body :global(span.labelpink) {
+    background: #fce4ec !important;
+    color: #333 !important;
+  }
+
+  .post-body :global(span.labelorange) {
+    background: #fff3e0 !important;
+    color: #333 !important;
+  }
+
+  .post-body :global(blockquote.primary) {
+    margin: 1em 0;
+    padding: 10px 15px;
+    border-left: 6px solid #337ab7;
+    background: #f5f9fc;
+    border-radius: 4px;
+    color: #333;
+  }
+
+  .post-body :global(blockquote.success) {
+    margin: 1em 0;
+    padding: 10px 15px;
+    border-left: 6px solid #5cb85c;
+    background: #f3f9f7;
+    border-radius: 4px;
+    color: #333;
+  }
+
+
+  .post-body :global(blockquote.flat) {
+    margin: 1em 0;
+    padding: 8px 12px;
+    background: #f5f5f5;
+    border-left: 6px solid #ccc;
+    border-radius: 2px;
+    font-size: 14px;
+    color: #555;
+  }
+
+  /* Post Tags Styles */
+  .post-tags {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid #eee;
+  }
+
+  .tag-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    font-size: 13px;
+    color: #555;
+    text-decoration: none;
+    background: #f5f5f5;
+    border-radius: 12px;
+    transition: all 0.3s;
+  }
+
+  .tag-item:hover {
+    background: #e0e0e0;
+    color: #222;
+  }
+
+  .tag-item i {
+    font-size: 11px;
+  }
+
+  /* Post Navigation Styles */
+  .post-navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 18px;
+    padding-top: 18px;
+  }
+
+  .nav-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    transition: color 0.3s;
+    max-width: 250px;
+  }
+
+  .nav-btn:hover {
+    color: #555;
+  }
+
+  .prev-btn {
+    align-self: flex-start;
+  }
+
+  .next-btn {
+    align-self: flex-end;
+  }
+
+  .nav-label {
+    font-size: 14px;
+    font-weight: bold;
+    color: #222;
+    text-decoration: underline;
+    margin-bottom: 4px;
+  }
+
+  .nav-title {
+    font-size: 12px;
+    color: #666;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+  }
+
+  /* 评论区块样式 - 与文章卡片一致 */
+  .comment-section {
+    margin-top: 64px !important; /* 与上方文章流的间距 - 容器边界之间 */
+    padding-top: 0 !important; /* 覆盖默认的 padding-top: 40px */
+    padding-bottom: 0 !important; /* 覆盖默认的 padding-bottom: 40px */
+  }
+
+  .comment-block {
+    padding: 25px 42px;
+    background: #fff;
+    border-radius: 0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    animation: fadeIn 0.5s ease forwards;
+    margin: 0 !important; /* 移除任何可能的 margin */
+  }
+
+  /* 强制重置 Giscus 组件的间距 */
+  :global(.giscus-frame) {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* 强制重置 Giscus 容器的间距 */
+  :global(.giscus-container) {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+</style>

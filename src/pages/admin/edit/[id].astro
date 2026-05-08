@@ -1,0 +1,369 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+
+export const prerender = false;
+var postId = Astro.params.id;
+---
+
+<AdminLayout title="编辑文章 - Admin">
+  <div class="admin-container">
+    <div class="admin-sidebar">
+      <h1>晰听的BLOG</h1>
+      <nav class="admin-nav">
+        <a href="/admin">文章列表</a>
+        <a href="/admin/new">新建文章</a>
+        <a href="/admin/settings">主页管理</a>
+        <a href="#" id="logoutBtn">退出登录</a>
+      </nav>
+    </div>
+    <div class="admin-main">
+      <div class="admin-header">
+        <h2>编辑文章</h2>
+        <div>
+          <a href="/admin" class="btn">返回</a>
+          <button id="saveDraftBtn" class="btn">保存草稿</button>
+          <button id="publishBtn" class="btn btn-primary">发布</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="form-group">
+          <label>标题</label>
+          <input type="text" id="title" class="form-control" placeholder="请输入文章标题" />
+        </div>
+        <div class="form-group">
+          <label>Slug (URL路径)</label>
+          <input type="text" id="slug" class="form-control" placeholder="post-url-slug" />
+        </div>
+        <div class="form-group">
+          <label>摘要</label>
+          <input type="text" id="excerpt" class="form-control" placeholder="简短描述..." />
+        </div>
+        <div class="form-group">
+          <label>标签 (用逗号分隔)</label>
+          <input type="text" id="tags" class="form-control" placeholder="技术, 教程, Astro" />
+        </div>
+        <div class="form-group">
+          <label>背景图URL (可选)</label>
+          <input type="text" id="backgroundImage" class="form-control" placeholder="https://example.com/image.jpg" />
+        </div>
+        <div class="form-group">
+          <label>内容</label>
+          <div id="vditor"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vditor CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/vditor@3.9.9/dist/index.css" />
+
+  <script is:inline src="https://unpkg.com/vditor@3.9.9/dist/index.min.js"></script>
+  <script is:inline>
+    var API_BASE = 'http://localhost:3002';
+    var postId = window.location.pathname.split('/').pop();
+    var vditor;
+
+    // Initialize Vditor
+    function initVditor(content) {
+      vditor = new Vditor('vditor', {
+        height: 600,
+        placeholder: '开始写作...',
+        mode: 'sv', // 分屏预览模式
+        value: content || '',
+        toolbar: [
+          'headings',
+          'bold',
+          'italic',
+          'strike',
+          '|',
+          'link',
+          'emoji',
+          '|',
+          'list',
+          'ordered-list',
+          'check',
+          'outdent',
+          'indent',
+          '|',
+          'quote',
+          'code',
+          'inline-code',
+          'table',
+          '|',
+          'upload',
+          '|',
+          'undo',
+          'redo',
+          '|',
+          'outline',
+          'both',
+          'code-theme',
+          'export',
+          '|',
+          'preview',
+          'fullscreen',
+          {
+            name: 'insert-note',
+            tip: '插入Note块',
+            className: 'vditor-tooltipped vditor-tooltipped__s',
+            html: '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>',
+            click: () => {
+              insertBlock('note');
+            }
+          },
+          {
+            name: 'insert-info',
+            tip: '插入Info块',
+            className: 'vditor-tooltipped vditor-tooltipped__s',
+            html: '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>',
+            click: () => {
+              insertBlock('info');
+            }
+          },
+          {
+            name: 'insert-warning',
+            tip: '插入Warning块',
+            className: 'vditor-tooltipped vditor-tooltipped__s',
+            html: '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>',
+            click: () => {
+              insertBlock('warning');
+            }
+          },
+          {
+            name: 'insert-danger',
+            tip: '插入Danger块',
+            className: 'vditor-tooltipped vditor-tooltipped__s',
+            html: '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>',
+            click: () => {
+              insertBlock('danger');
+            }
+          },
+          {
+            name: 'insert-labelgreen',
+            tip: '插入绿色标签',
+            className: 'vditor-tooltipped vditor-tooltipped__s',
+            html: '<svg viewBox="0 0 24 24"><text x="4" y="18" font-size="14" font-weight="bold" fill="currentColor">G</text></svg>',
+            click: () => {
+              insertLabel('green');
+            }
+          },
+          {
+            name: 'insert-labelred',
+            tip: '插入红色标签',
+            className: 'vditor-tooltipped vditor-tooltipped__s',
+            html: '<svg viewBox="0 0 24 24"><text x="4" y="18" font-size="14" font-weight="bold" fill="currentColor">R</text></svg>',
+            click: () => {
+              insertLabel('red');
+            }
+          },
+          {
+            name: 'insert-labelblue',
+            tip: '插入蓝色标签',
+            className: 'vditor-tooltipped vditor-tooltipped__s',
+            html: '<svg viewBox="0 0 24 24"><text x="4" y="18" font-size="14" font-weight="bold" fill="currentColor">B</text></svg>',
+            click: () => {
+              insertLabel('blue');
+            }
+          },
+          {
+            name: 'insert-labelyellow',
+            tip: '插入黄色标签',
+            className: 'vditor-tooltipped vditor-tooltipped__s',
+            html: '<svg viewBox="0 0 24 24"><text x="4" y="18" font-size="14" font-weight="bold" fill="currentColor">Y</text></svg>',
+            click: () => {
+              insertLabel('yellow');
+            }
+          },
+          {
+            name: 'insert-labelgrey',
+            tip: '插入灰色标签',
+            className: 'vditor-tooltipped vditor-tooltipped__s',
+            html: '<svg viewBox="0 0 24 24"><text x="4" y="18" font-size="14" font-weight="bold" fill="currentColor">Gr</text></svg>',
+            click: () => {
+              insertLabel('grey');
+            }
+          },
+          {
+            name: 'insert-labelpink',
+            tip: '插入粉色标签',
+            className: 'vditor-tooltipped vditor-tooltipped__s',
+            html: '<svg viewBox="0 0 24 24"><text x="4" y="18" font-size="14" font-weight="bold" fill="currentColor">P</text></svg>',
+            click: () => {
+              insertLabel('pink');
+            }
+          },
+          {
+            name: 'insert-labelorange',
+            tip: '插入橙色标签',
+            className: 'vditor-tooltipped vditor-tooltipped__s',
+            html: '<svg viewBox="0 0 24 24"><text x="4" y="18" font-size="14" font-weight="bold" fill="currentColor">O</text></svg>',
+            click: () => {
+              insertLabel('orange');
+            }
+          }
+        ],
+        preview: {
+          hljs: {
+            enable: true,
+            style: 'https://unpkg.com/vditor@3.9.9/dist/js/highlight.js/styles/atom-one-light.css',
+            lineNumber: true
+          },
+          theme: {
+            current: 'light'
+          },
+          markdown: {
+            autoSpace: false
+          }
+        },
+        cache: {
+          enable: false
+        },
+        counter: {
+          enable: true
+        }
+      });
+    }
+
+    // Insert custom note block
+    function insertBlock(type) {
+      var blockText = '';
+      switch(type) {
+        case 'note':
+          blockText = ':::note\n内容\n:::';
+          break;
+        case 'info':
+          blockText = ':::info\n内容\n:::';
+          break;
+        case 'warning':
+          blockText = ':::warning\n内容\n:::';
+          break;
+        case 'danger':
+          blockText = ':::danger\n内容\n:::';
+          break;
+      }
+      vditor.insertValue(blockText);
+    }
+
+    // Insert custom label
+    function insertLabel(variant) {
+      var labelText = '';
+      switch(variant) {
+        case 'green':
+          labelText = '[!labelgreen]@内容@';
+          break;
+        case 'red':
+          labelText = '[!labelred]@内容@';
+          break;
+        case 'blue':
+          labelText = '[!labelblue]@内容@';
+          break;
+        case 'yellow':
+          labelText = '[!labelyellow]@内容@';
+          break;
+        case 'grey':
+          labelText = '[!labelgrey]@内容@';
+          break;
+        case 'pink':
+          labelText = '[!labelpink]@内容@';
+          break;
+        case 'orange':
+          labelText = '[!labelorange]@内容@';
+          break;
+      }
+      vditor.insertValue(labelText);
+    }
+
+    // Load post
+    function loadPost() {
+      fetch(API_BASE + '/api/admin/posts/' + postId, {
+        credentials: 'include'
+      })
+      .then(function(res) {
+        if (!res.ok) {
+          throw new Error('文章不存在');
+        }
+        return res.json();
+      })
+      .then(function(result) {
+        var post = result.post;
+        document.getElementById('title').value = post.title;
+        document.getElementById('slug').value = post.slug;
+        document.getElementById('excerpt').value = post.excerpt || '';
+        document.getElementById('tags').value = post.tags ? post.tags.join(', ') : '';
+        document.getElementById('backgroundImage').value = post.background_image || '';
+
+        // Initialize editor with content
+        initVditor(post.content || '');
+      })
+      .catch(function() {
+        alert('加载文章失败');
+        window.location.href = '/admin';
+      });
+    }
+
+    function updatePost(status) {
+      var title = document.getElementById('title').value;
+      var slug = document.getElementById('slug').value;
+      var excerpt = document.getElementById('excerpt').value;
+      var tags = document.getElementById('tags').value;
+      var backgroundImage = document.getElementById('backgroundImage').value;
+      var content = vditor.getValue();
+
+      if (!title || !slug || !content) {
+        alert('标题、Slug和内容不能为空');
+        return;
+      }
+
+      fetch(API_BASE + '/api/admin/posts/' + postId, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          title: title,
+          slug: slug,
+          excerpt: excerpt,
+          tags: tags ? tags.split(',').map(function(t) { return t.trim(); }) : [],
+          content: content,
+          backgroundImage: backgroundImage,
+          status: status
+        })
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (data.success) {
+          alert(status === 'published' ? '发布成功！' : '草稿已保存');
+          window.location.href = '/admin';
+        } else {
+          alert(data.error || '保存失败');
+        }
+      })
+      .catch(function() {
+        alert('保存失败');
+      });
+    }
+
+    document.getElementById('saveDraftBtn').addEventListener('click', function() {
+      updatePost('draft');
+    });
+
+    document.getElementById('publishBtn').addEventListener('click', function() {
+      updatePost('published');
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', function(e) {
+      e.preventDefault();
+      fetch(API_BASE + '/api/admin/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      }).then(function() {
+        window.location.href = '/admin/login';
+      });
+    });
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      loadPost();
+    });
+  </script>
+</AdminLayout>

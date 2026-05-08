@@ -1,0 +1,434 @@
+---
+import Header from '../components/NextHeader.astro';
+import Footer from '../components/NextFooter.astro';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title = "Xiting's Blog", description = '黑果小兵,daliansky,blog.daliansky.net,macOS,Hackintosh,黑苹果,linux' } = Astro.props;
+---
+
+<!doctype html>
+<html class="theme-next muse use-motion" lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2" />
+    <meta name="theme-color" content="#222" />
+    <meta name="description" content={description} />
+    <meta name="keywords" content="daliansky,黑果小兵,macOS,Hackintosh,黑苹果,linux,blog.daliansky.net" />
+    <title>{title}</title>
+
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.png" />
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/css/next.css" />
+    <link rel="stylesheet" href="//fastly.jsdelivr.net/npm/@fancyapps/fancybox@3.2.5/dist/jquery.fancybox.min.css" />
+    <link href="//fonts.googleapis.com/css?family=Noto+Serif+SC:300,300italic,400,400italic,700,700italic|Roboto+Mono:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet" />
+
+    <!-- Scripts -->
+    <script is:inline src="//fastly.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+    <link href="/lib/pace/pace-theme-clock.min.css?v=1.0.0" rel="stylesheet" />
+
+    <!-- 自定义时钟加载动画初始化 -->
+    <script is:inline>
+      // 自定义Pace.js的HTML结构
+      paceOptions = {
+        elements: false,
+        restartOnRequestAfter: false
+      };
+
+      // 创建炫酷时钟HTML结构
+      function createClockLoader() {
+        const paceActivity = document.querySelector('.pace-activity');
+        if (!paceActivity) return;
+
+        // 清空现有内容
+        paceActivity.innerHTML = '';
+
+        // 创建主时钟容器
+        const clock = document.createElement('div');
+        clock.className = 'pace-clock';
+
+        // 创建鎏金色内圈
+        const innerRing = document.createElement('div');
+        innerRing.className = 'pace-clock-inner-ring';
+        clock.appendChild(innerRing);
+
+        // 创建星空色表盘
+        const clockFace = document.createElement('div');
+        clockFace.className = 'pace-clock-face';
+
+        // 创建12个刻度
+        for (let i = 0; i < 12; i++) {
+          const mark = document.createElement('div');
+          mark.className = 'pace-clock-mark';
+          clockFace.appendChild(mark);
+        }
+
+        clock.appendChild(clockFace);
+
+        // 创建中心点
+        const center = document.createElement('div');
+        center.className = 'pace-clock-center';
+        clock.appendChild(center);
+
+        // 创建纺锤状分针
+        const hand = document.createElement('div');
+        hand.className = 'pace-clock-hand';
+        clock.appendChild(hand);
+
+        paceActivity.appendChild(clock);
+      }
+
+      // 监听Pace.js事件
+      document.addEventListener('DOMContentLoaded', function() {
+        createClockLoader();
+
+        // 当Pace激活时重新创建时钟
+        if (window.Pace) {
+          Pace.on('start', function() {
+            const paceActivity = document.querySelector('.pace-activity');
+            if (paceActivity) {
+              paceActivity.classList.remove('pace-clock-loaded');
+              if (!paceActivity.querySelector('.pace-clock')) {
+                setTimeout(createClockLoader, 50);
+              }
+            }
+          });
+
+          // 当Pace完成时，停留1.8秒后添加飞出动画类
+          Pace.on('done', function() {
+            const paceActivity = document.querySelector('.pace-activity');
+            if (paceActivity) {
+              // 停留1.8秒后开始飞出动画
+              setTimeout(function() {
+                paceActivity.classList.add('pace-clock-loaded');
+              }, 1800);
+            }
+          });
+
+          // 确保页面加载时创建时钟
+          setTimeout(createClockLoader, 100);
+        }
+      });
+    </script>
+
+    <script is:inline>
+      var NexT = window.NexT || {};
+      var CONFIG = {
+        root: "/",
+        scheme: "Muse",
+        version: "6.6.0",
+        fancybox: true,
+        fastclick: false,
+        lazyload: false,
+        tabs: true,
+        motion: {
+          enable: true,
+          async: false,
+          transition: {
+            post_block: "fadeIn",
+            post_header: "slideDownIn",
+            post_body: "slideDownIn",
+            coll_header: "slideLeftIn",
+            sidebar: "slideUpIn"
+          }
+        }
+      };
+    </script>
+  </head>
+
+  <body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+    <div class="container">
+      <Header />
+
+      <!-- 背景图片 -->
+      <div class="page-background"></div>
+
+      <main id="main" class="main">
+        <div class="main-inner">
+          <div class="content-wrap">
+            <div id="content" class="content">
+              <slot />
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <Footer />
+
+      <!-- 返回顶部 -->
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        <span id="scrollpercent">
+          <span>0</span>%
+        </span>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script is:inline src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script is:inline src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+    <script is:inline src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+    <script is:inline src="https://fastly.jsdelivr.net/npm/@fancyapps/fancybox@3.2.5/dist/jquery.fancybox.min.js"></script>
+    <script is:inline src="/js/utils.js?v=6.6.0"></script>
+    <script is:inline src="/js/motion.js?v=6.6.0"></script>
+    <script is:inline src="/js/bootstrap.js?v=6.6.0"></script>
+    <script is:inline src="/js/local-search.js?v=1.0.0"></script>
+
+    <!-- Code highlighting - Xcode Light style (atom-one-light) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/atom-one-light.min.css" />
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+  </body>
+</html>
+
+<style is:global>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+  }
+
+  .container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 10;
+  }
+
+  .main {
+    flex: 1;
+    position: relative;
+    z-index: 10;
+  }
+
+  .main-inner {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 20px 20px 40px;
+    position: relative;
+    z-index: 10;
+  }
+
+  /* 确保头部和导航栏在背景图片之上 */
+  .header {
+    position: relative;
+    z-index: 100;
+  }
+
+  .site-nav {
+    position: relative;
+    z-index: 100;
+  }
+
+  /* 页脚 */
+  .footer {
+    position: relative;
+    z-index: 100;
+  }
+
+  /* 翻页 */
+  .pagination {
+    position: relative;
+    z-index: 100;
+  }
+
+  /* 背景图片 - 始终在最底层 */
+  .page-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('https://a1.boltp.com/2026/05/06/69fb579073a05.png');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-attachment: fixed;
+    opacity: 0.85;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* 移动端背景图片优化 */
+  @media (max-width: 767px) {
+    .page-background {
+      position: fixed;
+      background-size: cover;
+      background-position: center top;
+    }
+  }
+
+  /* 返回顶部按钮 */
+  .back-to-top {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 40px;
+    height: 40px;
+    background: #222;
+    color: #fff;
+    text-align: center;
+    line-height: 40px;
+    border-radius: 4px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 1000;
+  }
+
+  .back-to-top.back-to-top-on {
+    opacity: 1;
+  }
+
+  #scrollpercent {
+    font-size: 12px;
+  }
+
+  /* 响应式 */
+  @media (max-width: 768px) {
+    .page-background {
+      max-height: 400px;
+      width: 80%;
+    }
+  }
+
+  /* Code styling - reset first */
+  code {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  }
+
+  /* Code blocks - use atom-one-light theme colors */
+  pre {
+    background: #fafafa !important;
+    border: 1px solid #e1e1e1;
+    border-radius: 4px;
+    padding: 15px;
+    overflow-x: auto;
+    display: block !important;
+  }
+
+  pre code {
+    color: #383a42 !important;
+    background: transparent !important;
+    padding: 0 !important;
+    font-size: 14px;
+    line-height: 1.5;
+    display: block !important;
+  }
+
+  /* Inline code - purple-red color (#c7254e) */
+  /* Use more specific selectors to avoid matching HTML tags */
+  p code, li code, td code, th code,
+  .post-body code, .post-excerpt code,
+  h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {
+    color: #c7254e !important;
+    background: #f9f2f4;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.9em;
+  }
+
+  /* CRITICAL: Override for code blocks - must come after inline code rules */
+  pre code {
+    color: #383a42 !important;
+    background: transparent !important;
+    padding: 0 !important;
+    display: block !important;
+  }
+</style>
+
+    <script is:inline>
+      // 动态标题效果
+      const originalTitle = document.title;
+      let isTabActive = true;
+
+      // 监听页面可见性变化
+      document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+          // 标签页失去焦点 - 用户切换到其他标签页
+          isTabActive = false;
+          document.title = 'zzz睡觉了晚安';
+        } else {
+          // 标签页获得焦点 - 用户回到这个标签页
+          isTabActive = true;
+          document.title = '打起精神来ing';
+          // 1.5秒后恢复原标题
+          setTimeout(function() {
+            if (isTabActive) {
+              document.title = originalTitle;
+            }
+          }, 1500);
+        }
+      });
+
+      // 监听窗口焦点变化（额外保障）
+      window.addEventListener('focus', function() {
+        if (!isTabActive) {
+          isTabActive = true;
+          document.title = '打起精神来ing';
+          setTimeout(function() {
+            if (isTabActive) {
+              document.title = originalTitle;
+            }
+          }, 1500);
+        }
+      });
+
+      window.addEventListener('blur', function() {
+        if (!document.hidden) {
+          // 某些情况下 blur 会触发但 hidden 为 false
+          isTabActive = false;
+          document.title = 'zzz睡觉了晚安';
+        }
+      });
+    </script>
+
+<script is:inline>
+      // Back to top functionality
+      document.addEventListener('DOMContentLoaded', function() {
+        const backToTop = document.querySelector('.back-to-top');
+        const scrollpercent = document.querySelector('#scrollpercent span');
+
+        window.addEventListener('scroll', function() {
+          const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+          const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+          const scrollPercent = Math.round((scrollTop / scrollHeight) * 100);
+
+          if (scrollpercent) {
+            scrollpercent.textContent = scrollPercent;
+          }
+
+          if (scrollTop > 300) {
+            backToTop?.classList.add('back-to-top-on');
+          } else {
+            backToTop?.classList.remove('back-to-top-on');
+          }
+        });
+
+        backToTop?.addEventListener('click', function() {
+          window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+          });
+        });
+
+        // Apply highlight.js to code blocks
+        if (typeof hljs !== 'undefined') {
+          document.querySelectorAll('pre code').forEach((block) => {
+            hljs.highlightElement(block);
+          });
+        }
+      });
+    </script>
