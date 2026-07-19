@@ -1,0 +1,303 @@
+/* 炫酷时钟加载动画主题 */
+
+.pace {
+  -webkit-pointer-events: none;
+  pointer-events: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+/* 时钟容器 - 从下方开始 */
+.pace .pace-activity {
+  display: block;
+  position: fixed;
+  z-index: 2000;
+  top: 100%;
+  left: 50%;
+  width: 128px;
+  height: 128px;
+  margin-left: -64px;
+  margin-top: 0;
+  pointer-events: none;
+}
+
+/* 主时钟容器 */
+.pace .pace-clock {
+  width: 128px;
+  height: 128px;
+  border-radius: 50%;
+  position: relative;
+  box-shadow: 0 0 60px rgba(128, 128, 128, 0.6),
+              0 0 100px rgba(128, 128, 128, 0.3),
+              inset 0 0 30px rgba(0, 0, 50, 0.5);
+}
+
+/* 烫灰色外圈 */
+.pace .pace-clock::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  border-radius: 50%;
+  background: linear-gradient(45deg,
+    #C0C0C0 0%,
+    #A9A9A9 10%,
+    #D3D3D3 20%,
+    #E8E8E8 30%,
+    #C0C0C0 40%,
+    #A9A9A9 50%,
+    #D3D3D3 60%,
+    #E8E8E8 70%,
+    #BEBEBE 80%,
+    #A9A9A9 90%,
+    #C0C0C0 100%);
+  z-index: -1;
+  animation: pace-outer-ring-rotate 4s linear infinite;
+  filter: blur(1px);
+}
+
+/* 鎏灰色内圈 */
+.pace .pace-clock-inner-ring {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  background: linear-gradient(135deg,
+    #9E9E9E 0%,
+    #C0C0C0 25%,
+    #808080 50%,
+    #BEBEBE 75%,
+    #9E9E9E 100%);
+  background-clip: padding-box;
+  box-shadow: 0 0 20px rgba(128, 128, 128, 0.8),
+              inset 0 0 15px rgba(192, 192, 192, 0.3);
+  animation: pace-inner-ring-pulse 2s ease-in-out infinite;
+}
+
+/* 星空色表盘 */
+.pace .pace-clock-face {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  bottom: 14px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%,
+    #1a1a2e 0%,
+    #16213e 30%,
+    #0f0f23 60%,
+    #000000 100%);
+  overflow: hidden;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
+}
+
+/* 星空效果 */
+.pace .pace-clock-face::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-image:
+    radial-gradient(2px 2px at 20% 30%, #fff, transparent),
+    radial-gradient(2px 2px at 60% 70%, #fff, transparent),
+    radial-gradient(1px 1px at 50% 50%, #fff, transparent),
+    radial-gradient(1px 1px at 80% 10%, #d3d3d3, transparent),
+    radial-gradient(2px 2px at 90% 60%, #fff, transparent),
+    radial-gradient(1px 1px at 33% 80%, #d3d3d3, transparent),
+    radial-gradient(1px 1px at 15% 90%, #fff, transparent);
+  background-size: 100% 100%;
+  opacity: 0.8;
+  animation: pace-stars-twinkle 3s ease-in-out infinite;
+}
+
+/* 时钟刻度 */
+.pace .pace-clock-mark {
+  position: absolute;
+  width: 3px;
+  height: 8px;
+  background: linear-gradient(to bottom, #D3D3D3, #A9A9A9);
+  top: 18px;
+  left: 50%;
+  margin-left: -1.5px;
+  transform-origin: 50% 46px;
+  border-radius: 2px;
+  box-shadow: 0 0 5px rgba(128, 128, 128, 0.8);
+}
+
+.pace .pace-clock-mark:nth-child(1) { transform: rotate(0deg); }
+.pace .pace-clock-mark:nth-child(2) { transform: rotate(30deg); }
+.pace .pace-clock-mark:nth-child(3) { transform: rotate(60deg); }
+.pace .pace-clock-mark:nth-child(4) { transform: rotate(90deg); }
+.pace .pace-clock-mark:nth-child(5) { transform: rotate(120deg); }
+.pace .pace-clock-mark:nth-child(6) { transform: rotate(150deg); }
+.pace .pace-clock-mark:nth-child(7) { transform: rotate(180deg); }
+.pace .pace-clock-mark:nth-child(8) { transform: rotate(210deg); }
+.pace .pace-clock-mark:nth-child(9) { transform: rotate(240deg); }
+.pace .pace-clock-mark:nth-child(10) { transform: rotate(270deg); }
+.pace .pace-clock-mark:nth-child(11) { transform: rotate(300deg); }
+.pace .pace-clock-mark:nth-child(12) { transform: rotate(330deg); }
+
+/* 中心点 */
+.pace .pace-clock-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  background: radial-gradient(circle, #D3D3D3 0%, #A9A9A9 50%, #808080 100%);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  box-shadow: 0 0 15px rgba(128, 128, 128, 0.9),
+              0 0 25px rgba(128, 128, 128, 0.5);
+}
+
+/* 纺锤状分针 - 深蓝色金色描边 */
+.pace .pace-clock-hand {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 45px;
+  margin-left: -2px;
+  margin-top: -45px;
+  transform-origin: bottom center;
+  z-index: 5;
+}
+
+/* 纺锤形状 - 使用clip-path */
+.pace .pace-clock-hand::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom,
+    #1a237e 0%,
+    #283593 30%,
+    #1a237e 60%,
+    #0d1545 100%);
+  clip-path: polygon(
+    50% 0%,
+    100% 25%,
+    100% 100%,
+    0% 100%,
+    0% 25%
+  );
+  border: 2px solid #C0C0C0;
+  border-radius: 2px 2px 50% 50%;
+  box-shadow: 0 0 10px rgba(128, 128, 128, 0.6),
+              inset 0 0 5px rgba(192, 192, 192, 0.3);
+  filter: drop-shadow(0 0 3px rgba(128, 128, 128, 0.8));
+}
+
+/* 飞入动画 - 从下方飞入到距离底部160px位置，带弹性效果 */
+@keyframes pace-clock-fly-in {
+  0% {
+    top: 100%;
+    transform: scale(0.3) rotate(0deg);
+  }
+  50% {
+    top: calc(100% - 210px);
+    transform: scale(1.1) rotate(0deg);
+  }
+  75% {
+    top: calc(100% - 190px);
+    transform: scale(0.95) rotate(0deg);
+  }
+  100% {
+    top: calc(100% - 160px);
+    margin-top: 0;
+    margin-left: -64px;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+/* 分针旋转动画 */
+@keyframes pace-minute-hand-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* 飞出动画 - 从距离底部160px位置飞回下方，带弹性效果 */
+@keyframes pace-clock-fly-out {
+  0% {
+    top: calc(100% - 160px);
+    margin-top: 0;
+    margin-left: -64px;
+    transform: scale(1) rotate(0deg);
+  }
+  25% {
+    top: calc(100% - 170px);
+    transform: scale(1.05) rotate(0deg);
+  }
+  50% {
+    top: calc(100% - 150px);
+    transform: scale(0.9) rotate(0deg);
+  }
+  100% {
+    top: 100%;
+    margin-top: 0;
+    margin-left: -64px;
+    transform: scale(0.3) rotate(0deg);
+  }
+}
+
+/* 外圈旋转动画 */
+@keyframes pace-outer-ring-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* 内圈脉动动画 */
+@keyframes pace-inner-ring-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.02);
+    opacity: 1;
+  }
+}
+
+/* 星空闪烁动画 */
+@keyframes pace-stars-twinkle {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* 激活状态 */
+.pace.pace-active .pace-activity {
+  animation: pace-clock-fly-in 1.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.pace.pace-active .pace-activity.pace-clock-loaded {
+  animation: pace-clock-fly-out 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+}
+
+.pace.pace-active .pace-clock-hand::before {
+  animation: pace-minute-hand-spin 1.4s linear infinite;
+}
+
+/* 加载完成后隐藏 */
+.pace.pace-done .pace-activity {
+  display: none;
+}

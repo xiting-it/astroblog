@@ -1,0 +1,703 @@
+---
+import { getCollection, render } from 'astro:content';
+import NextLayout from '../../layouts/NextLayout.astro';
+import Giscus from '../../components/Giscus.astro';
+
+// Generate static paths for all published posts
+export async function getStaticPaths() {
+  try {
+    const posts = await getCollection('blog');
+    const publishedPosts = posts.filter(post => post.data.draft !== true);
+
+    return publishedPosts.map((post) => ({
+      params: { slug: post.id.replace('.md', '') },
+      props: { post },
+    }));
+  } catch (error) {
+    console.error('Error generating static paths:', error);
+    return [];
+  }
+}
+
+// Get post from props with error handling
+const { post } = Astro.props;
+
+if (!post) {
+  return new Response('Post not found', {
+    status: 404,
+    statusText: 'Not Found'
+  });
+}
+
+const { data } = post;
+const { Content } = await render(post);
+
+// Safe date formatting
+const formatDate = (date: Date, format: 'long' | 'short' = 'long') => {
+  try {
+    const options = format === 'long'
+      ? { year: 'numeric' as const, month: 'long' as const, day: 'numeric' as const }
+      : { year: 'numeric' as const, month: '2-digit' as const, day: '2-digit' as const };
+    return date.toLocaleDateString('zh-CN', options);
+  } catch {
+    return date.toISOString();
+  }
+};
+
+const formattedDate = formatDate(data.pubDate);
+const formattedUpdatedDate = data.updatedDate ? formatDate(data.updatedDate) : null;
+
+// Get all posts for navigation (sorted by date)
+let sortedPosts: any[] = [];
+try {
+  const allPosts = await getCollection('blog');
+  sortedPosts = allPosts
+    .filter(p => p.data.draft !== true)
+    .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+} catch (error) {
+  console.error('Error fetching posts for navigation:', error);
+  sortedPosts = [];
+}
+
+// Find current post index safely
+const currentIndex = sortedPosts.findIndex((p) => p.id === post.id);
+
+// Get previous and next posts
+const prevPost = currentIndex >= 0 && currentIndex < sortedPosts.length - 1
+  ? sortedPosts[currentIndex + 1]
+  : null;
+const nextPost = currentIndex > 0 ? sortedPosts[currentIndex - 1] : null;
+
+// Get raw content for word count
+const rawContent = post?.body?.trim() || '';
+const wordCount = rawContent.length;
+---
+
+<NextLayout title={data.title} description={data.description || data.title}>
+  <div class="posts-expand">
+    <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+      <div class="post-block">
+        <header class="post-header">
+          <h1 class="post-title" itemprop="name headline">
+            {data.title}
+          </h1>
+
+          <div class="post-meta">
+            <!-- 第一行：创建日期和修改日期 -->
+            <div class="post-meta-row">
+              <span class="post-time">
+                <span class="post-meta-item-icon">
+                  <i class="fa-regular fa-calendar"></i>
+                </span>
+                <time title="创建时间" itemprop="dateCreated datePublished" datetime={formattedDate}>
+                  {formattedDate}
+                </time>
+              </span>
+
+              {formattedUpdatedDate && (
+                <span class="post-updated" style="margin-left: 4px;">
+                  <span class="post-meta-item-icon">
+                    <i class="fa-regular fa-calendar-plus"></i>
+                  </span>
+                  <time title="修改时间" itemprop="dateModified" datetime={formattedUpdatedDate}>
+                    {formattedUpdatedDate}
+                  </time>
+                </span>
+              )}
+            </div>
+
+            <!-- 第二行：字数 | 作者 -->
+            <div class="post-meta-row">
+              <span class="post-wordcount">
+                <span class="post-meta-item-icon">
+                  <i class="fa-regular fa-file-word"></i>
+                </span>
+                <span title="本文字数">{wordCount}字</span>
+              </span>
+
+              <span class="post-meta-divider">|</span>
+
+              <span class="post-author">
+                <span class="post-meta-item-icon">
+                  <i class="fa-regular fa-pen-to-square"></i>
+                </span>
+                <span title="作者">作者：xiting</span>
+              </span>
+            </div>
+
+            <!-- 第三行：分类 -->
+            {data.category && (
+              <div class="post-meta-row">
+                <span class="post-category-inline">
+                  <span class="post-meta-item-icon">
+                    <i class="fa-solid fa-folder"></i>
+                  </span>
+                  <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                    <a href={`/categories/${data.category}`} itemprop="url" rel="index">
+                      <span itemprop="name">{data.category}</span>
+                    </a>
+                  </span>
+                </span>
+              </div>
+            )}
+          </div>
+        </header>
+
+        {data.backgroundImage && (
+          <div class="post-background" style={`background-image: url('${data.backgroundImage}')`}></div>
+        )}
+
+        <div class="post-body" itemprop="articleBody">
+          <Content />
+        </div>
+
+        <!-- Tags Section -->
+        {data.tags && data.tags.length > 0 && (
+          <div class="post-tags">
+            {data.tags.map((tag: string) => (
+              <a href={`/tags/${tag}`} class="tag-item">
+                <i class="fa-solid fa-tag"></i>
+                {tag}
+              </a>
+            ))}
+          </div>
+        )}
+
+        <!-- Navigation Section -->
+        <div class="post-navigation">
+          {prevPost && (
+            <a class="nav-btn prev-btn" href={`/blog/${prevPost.id.replace('.md', '')}`}>
+              <span class="nav-label">上一篇</span>
+              <span class="nav-title">{prevPost.data.title}</span>
+            </a>
+          )}
+
+          <a class="nav-btn home-btn" href="/">
+            <span class="nav-label">返回首页</span>
+          </a>
+
+          {nextPost && (
+            <a class="nav-btn next-btn" href={`/blog/${nextPost.id.replace('.md', '')}`}>
+              <span class="nav-label">下一篇</span>
+              <span class="nav-title">{nextPost.data.title}</span>
+            </a>
+          )}
+        </div>
+      </div>
+    </article>
+  </div>
+
+  <!-- Giscus 评论系统 -->
+  <div class="posts-expand comment-section">
+    <div class="comment-block">
+      <Giscus lang="zh-CN" theme="light" />
+    </div>
+  </div>
+</NextLayout>
+
+<style>
+  .posts-expand {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 40px 20px;
+  }
+
+  .post {
+    margin: 60px 0;
+  }
+
+  .post-block {
+    padding: 25px 42px;
+    background: #fff;
+    border-radius: 0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    animation: fadeIn 0.5s ease forwards;
+  }
+
+  .post-background {
+    width: 100%;
+    height: 300px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    margin: 15px 0;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .post-header {
+    animation: slideDownIn 0.5s ease;
+    text-align: center;
+  }
+
+  @keyframes slideDownIn {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .post-title {
+    font-size: 26px;
+    font-weight: 700;
+    margin: 0;
+    color: #222;
+    text-align: center;
+  }
+
+  .post-meta {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #999;
+    text-align: center;
+  }
+
+  .post-meta-item-icon {
+    margin-right: 5px;
+  }
+
+  .post-meta-divider {
+    margin: 0 8px;
+  }
+
+  .post-meta-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .post-meta-item-icon {
+    margin-right: 3px;
+  }
+
+  .post-time,
+  .post-updated,
+  .post-wordcount,
+  .post-author,
+  .post-category-inline,
+  .post-tags-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .post-author a,
+  .post-category-inline a,
+  .post-tags-inline a {
+    color: #999;
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+
+  .post-author a:hover,
+  .post-category-inline a:hover,
+  .post-tags-inline a:hover {
+    color: #222;
+  }
+
+  .post-body {
+    animation: slideDownIn 0.5s ease 0.1s both;
+    margin-top: 20px;
+    color: #24292e;
+    word-wrap: break-word;
+    overflow: auto;
+    line-height: 1.5;
+    font-size: 16px;
+    word-break: break-word;
+  }
+
+  /* List styles */
+  .post-body :global(ul ul ul) {
+    list-style-type: square;
+  }
+  .post-body :global(ul ul) {
+    list-style-type: circle;
+  }
+  .post-body :global(ul) {
+    list-style-type: disc;
+  }
+  .post-body :global(ul),
+  .post-body :global(ol) {
+    padding-left: 2em;
+    margin-top: 0;
+    margin-bottom: 16px;
+  }
+  .post-body :global(li + li) {
+    margin-top: 0.25em;
+  }
+
+  /* Heading styles */
+  .post-body :global(h1),
+  .post-body :global(h2),
+  .post-body :global(h3),
+  .post-body :global(h4),
+  .post-body :global(h5),
+  .post-body :global(h6) {
+    margin-top: 24px;
+    margin-bottom: 16px;
+    font-weight: 600;
+    line-height: 1.25;
+  }
+  .post-body :global(h1) {
+    font-size: 1.75em;
+  }
+  .post-body :global(h2) {
+    font-size: 1.55em;
+  }
+  .post-body :global(h3) {
+    font-size: 1.38em;
+  }
+  .post-body :global(h4) {
+    font-size: 1.25em;
+  }
+  .post-body :global(h5) {
+    font-size: 1.13em;
+  }
+  .post-body :global(h6) {
+    font-size: 1em;
+  }
+
+  /* HR styles */
+  .post-body :global(hr) {
+    height: 2px;
+    padding: 0;
+    margin: 24px 0;
+    background-color: #eaecef;
+    border: 0;
+  }
+
+  /* Paragraph styles */
+  .post-body :global(p) {
+    margin-top: 0;
+    margin-bottom: 16px;
+  }
+
+  /* Default blockquote styles */
+  .post-body :global(blockquote):not(.note):not(.primary):not(.success):not(.info):not(.warning):not(.danger):not(.flat) {
+    padding: 0 1em;
+    color: #6a737d;
+    border-left: 0.25em solid #eaecef;
+    margin: 16px 0;
+  }
+  .post-body :global(blockquote):not(.note):not(.primary):not(.success):not(.info):not(.warning):not(.danger):not(.flat) > :first-child {
+    margin-top: 0;
+  }
+  .post-body :global(blockquote):not(.note):not(.primary):not(.success):not(.info):not(.warning):not(.danger):not(.flat) > :last-child {
+    margin-bottom: 0;
+  }
+
+  /* Table styles */
+  .post-body :global(table) {
+    border-collapse: collapse;
+    empty-cells: show;
+    margin-bottom: 16px;
+    border-spacing: 0;
+    display: table;
+    width: 100%;
+    overflow-x: auto;
+  }
+  .post-body :global(table tr) {
+    background-color: #fafbfc;
+    border-top: 1px solid #c6cbd1;
+    display: table-row;
+  }
+  .post-body :global(table td),
+  .post-body :global(table th) {
+    padding: 6px 13px;
+    border: 1px solid #dfe2e5;
+    word-break: normal;
+    display: table-cell;
+  }
+  .post-body :global(table th) {
+    font-weight: 600;
+  }
+  .post-body :global(table tbody tr:nth-child(2n)) {
+    background-color: #fff;
+  }
+
+  /* Inline code styles */
+  .post-body :global(code:not(.hljs):not(.highlight-chroma)) {
+    padding: 0.2em 0.4em;
+    margin: 0;
+    font-size: 85%;
+    border-radius: 3px;
+    word-break: break-word;
+    background-size: 20px 20px;
+    white-space: pre-wrap;
+    background-color: rgba(27, 31, 35, 0.05);
+  }
+
+  /* Code block styles */
+  .post-body :global(pre) {
+    margin: 1em 0;
+  }
+  .post-body :global(pre > code) {
+    margin: 0;
+    font-size: 85%;
+    padding: 0.5em;
+    border-radius: 5px;
+    display: block;
+    overflow: auto;
+    white-space: pre;
+    background-size: 20px 20px;
+    word-break: initial;
+    word-wrap: normal;
+    background-color: #f6f8fa;
+  }
+
+  /* Custom blockquote styles - note, info, warning, danger, tip, success, primary, flat */
+  .post-body :global(blockquote.note),
+  .post-body :global(blockquote.info),
+  .post-body :global(blockquote.warning),
+  .post-body :global(blockquote.danger),
+  .post-body :global(blockquote.tip),
+  .post-body :global(blockquote.success),
+  .post-body :global(blockquote.primary),
+  .post-body :global(blockquote.flat) {
+    margin: 32px 0 !important;
+    padding: 12px 16px;
+    border-left: 8px solid;
+    border-radius: 0;
+    line-height: 1.6;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .post-body :global(blockquote.note) {
+    border-left-color: #6c757d;
+    background: #f8f9fa;
+  }
+
+  .post-body :global(blockquote.info) {
+    border-left-color: #5bc0de;
+    background: #e3f2fd;
+  }
+
+  .post-body :global(blockquote.warning) {
+    border-left-color: #ff9800;
+    background: #fff3e0;
+  }
+
+  .post-body :global(blockquote.danger) {
+    border-left-color: #dc3545;
+    background: #ffebee;
+  }
+
+  .post-body :global(blockquote.tip) {
+    border-left-color: #4caf50;
+    background: #e8f5e9;
+  }
+
+  .post-body :global(blockquote.success) {
+    border-left-color: #28a745;
+    background: #d4edda;
+  }
+
+  .post-body :global(blockquote.primary) {
+    border-left-color: #34495e;
+    background: #eaedf0;
+  }
+
+  .post-body :global(blockquote.flat) {
+    border-left-color: #95a5a6;
+    background: #f5f5f5;
+  }
+
+  /* Fix note/info/warning/danger/tip/success/primary/flat 内部元素的间距 */
+  .post-body :global(blockquote.note > *:first-child),
+  .post-body :global(blockquote.info > *:first-child),
+  .post-body :global(blockquote.warning > *:first-child),
+  .post-body :global(blockquote.danger > *:first-child),
+  .post-body :global(blockquote.tip > *:first-child),
+  .post-body :global(blockquote.success > *:first-child),
+  .post-body :global(blockquote.primary > *:first-child),
+  .post-body :global(blockquote.flat > *:first-child) {
+    margin-top: 0 !important;
+  }
+
+  .post-body :global(blockquote.note > *:last-child),
+  .post-body :global(blockquote.info > *:last-child),
+  .post-body :global(blockquote.warning > *:last-child),
+  .post-body :global(blockquote.danger > *:last-child),
+  .post-body :global(blockquote.tip > *:last-child),
+  .post-body :global(blockquote.success > *:last-child),
+  .post-body :global(blockquote.primary > *:last-child),
+  .post-body :global(blockquote.flat > *:last-child) {
+    margin-bottom: 0 !important;
+  }
+
+  /* Custom label tag styles */
+  .post-body :global(span.labelgreen),
+  .post-body :global(span.labelred),
+  .post-body :global(span.labelblue),
+  .post-body :global(span.labelyellow),
+  .post-body :global(span.labelgrey),
+  .post-body :global(span.labelpink),
+  .post-body :global(span.labelorange) {
+    display: inline !important;
+    padding: 1px 4px !important;
+    border-radius: 3px !important;
+    font-size: 0.9em !important;
+    margin: 0 1px !important;
+    line-height: 1.4 !important;
+    vertical-align: middle !important;
+  }
+
+  .post-body :global(span.labelgreen) {
+    background: #e8f5e9 !important;
+    color: #333 !important;
+  }
+
+  .post-body :global(span.labelred) {
+    background: #ffebee !important;
+    color: #333 !important;
+  }
+
+  .post-body :global(span.labelblue) {
+    background: #e3f2fd !important;
+    color: #333 !important;
+  }
+
+  .post-body :global(span.labelyellow) {
+    background: #fffde7 !important;
+    color: #333 !important;
+  }
+
+  .post-body :global(span.labelgrey) {
+    background: #f5f5f5 !important;
+    color: #333 !important;
+  }
+
+  .post-body :global(span.labelpink) {
+    background: #fce4ec !important;
+    color: #333 !important;
+  }
+
+  .post-body :global(span.labelorange) {
+    background: #fff3e0 !important;
+    color: #333 !important;
+  }
+
+  /* Post Tags Styles */
+  .post-tags {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid #eee;
+  }
+
+  .tag-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    font-size: 13px;
+    color: #555;
+    text-decoration: none;
+    background: #f5f5f5;
+    border-radius: 12px;
+    transition: all 0.3s;
+  }
+
+  .tag-item:hover {
+    background: #e0e0e0;
+    color: #222;
+  }
+
+  .tag-item i {
+    font-size: 11px;
+  }
+
+  /* Post Navigation Styles */
+  .post-navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 18px;
+    padding-top: 18px;
+  }
+
+  .nav-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    transition: color 0.3s;
+    max-width: 250px;
+  }
+
+  .nav-btn:hover {
+    color: #555;
+  }
+
+  .prev-btn {
+    align-self: flex-start;
+  }
+
+  .next-btn {
+    align-self: flex-end;
+  }
+
+  .nav-label {
+    font-size: 14px;
+    font-weight: bold;
+    color: #222;
+    text-decoration: underline;
+    margin-bottom: 4px;
+  }
+
+  .nav-title {
+    font-size: 12px;
+    color: #666;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+  }
+
+  /* Comment section styles */
+  .comment-section {
+    margin-top: 64px !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  .comment-block {
+    padding: 25px 42px;
+    background: #fff;
+    border-radius: 0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    animation: fadeIn 0.5s ease forwards;
+    margin: 0 !important;
+  }
+
+  :global(.giscus-frame) {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  :global(.giscus-container) {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+</style>

@@ -1,0 +1,453 @@
+---
+import { generateSearchIndex } from '../lib/search-index';
+import NextLayout from '../layouts/NextLayout.astro';
+
+// 生成搜索索引
+const searchIndex = await generateSearchIndex();
+const searchIndexJSON = JSON.stringify(searchIndex);
+---
+
+<NextLayout title="搜索">
+  <div class="search-page">
+    <div class="search-inner">
+      <h1 class="search-title">搜索</h1>
+
+      <!-- 搜索输入框 -->
+      <div class="search-input-wrapper">
+        <i class="fa-solid fa-search search-icon"></i>
+        <input
+          type="text"
+          id="search-input"
+          class="search-input"
+          placeholder="搜索文章标题、内容、分类或标签..."
+          autocomplete="off"
+        />
+        <button id="search-clear" class="search-clear" style="display: none;">
+          <i class="fa-solid fa-times"></i>
+        </button>
+      </div>
+
+      <!-- 搜索状态 -->
+      <div id="search-status" class="search-status"></div>
+
+      <!-- 搜索结果 -->
+      <div id="search-results" class="search-results">
+        <div class="search-placeholder">
+          <i class="fa-solid fa-search search-placeholder-icon"></i>
+          <p>输入关键词开始搜索</p>
+          <p class="search-hint">提示：可以搜索文章标题、内容、分类或标签</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 搜索索引数据 -->
+  <div id="search-index-data" style="display:none;" data-json={searchIndexJSON}></div>
+  <script is:inline>
+    (function() {
+      const dataEl = document.getElementById('search-index-data');
+      if (dataEl) {
+        window.SEARCH_INDEX = JSON.parse(dataEl.getAttribute('data-json'));
+      }
+    })();
+  </script>
+</NextLayout>
+
+<style>
+  .search-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px 20px;
+  }
+
+  .search-inner {
+    background: #fff;
+    padding: 40px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+  }
+
+  .search-title {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 30px;
+    color: #222;
+    text-align: center;
+  }
+
+  .search-input-wrapper {
+    position: relative;
+    margin-bottom: 20px;
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+    font-size: 16px;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 15px 50px 15px 45px;
+    font-size: 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    outline: none;
+    transition: all 0.3s;
+    box-sizing: border-box;
+  }
+
+  .search-input:focus {
+    border-color: #222;
+    box-shadow: 0 0 0 3px rgba(34, 34, 34, 0.1);
+  }
+
+  .search-clear {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    padding: 5px;
+    font-size: 16px;
+    transition: color 0.3s;
+  }
+
+  .search-clear:hover {
+    color: #222;
+  }
+
+  .search-status {
+    min-height: 24px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    color: #666;
+  }
+
+  .search-results {
+    min-height: 200px;
+  }
+
+  .search-placeholder {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+  }
+
+  .search-placeholder-icon {
+    font-size: 48px;
+    margin-bottom: 20px;
+    opacity: 0.3;
+  }
+
+  .search-placeholder p {
+    margin: 10px 0;
+    font-size: 16px;
+  }
+
+  .search-hint {
+    font-size: 14px;
+    color: #bbb;
+  }
+
+  /* 搜索结果项样式 */
+  .search-result-item {
+    padding: 20px;
+    margin-bottom: 15px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    transition: all 0.3s;
+    cursor: pointer;
+    text-decoration: none !important;
+    color: inherit !important;
+    display: block;
+  }
+
+  .search-result-item:hover {
+    background: #f0f0f0;
+    transform: translateX(5px);
+  }
+
+  .search-result-item * {
+    text-decoration: none !important;
+  }
+
+  .search-result-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #000 !important;
+    margin-bottom: 8px;
+  }
+
+  .search-result-meta {
+    font-size: 13px;
+    color: #666 !important;
+    margin-bottom: 10px;
+  }
+
+  .search-result-meta span {
+    margin-right: 15px;
+  }
+
+  .search-result-meta a {
+    color: #666 !important;
+    text-decoration: none !important;
+  }
+
+  .search-result-description {
+    font-size: 14px;
+    color: #333 !important;
+    line-height: 1.6;
+  }
+
+  .search-result-highlight {
+    background: #fff3cd;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-weight: 500;
+  }
+
+  .search-no-results {
+    text-align: center;
+    padding: 40px 20px;
+    color: #999;
+  }
+
+  .search-loading {
+    text-align: center;
+    padding: 40px 20px;
+    color: #999;
+  }
+
+  .search-loading::after {
+    content: '...';
+    animation: dots 1.5s steps(4, end) infinite;
+  }
+
+  @keyframes dots {
+    0%, 20% { content: '.'; }
+    40% { content: '..'; }
+    60%, 100% { content: '...'; }
+  }
+
+  /* 响应式 */
+  @media (max-width: 768px) {
+    .search-page {
+      padding: 20px 10px;
+    }
+
+    .search-inner {
+      padding: 20px;
+    }
+
+    .search-title {
+      font-size: 24px;
+    }
+
+    .search-input {
+      font-size: 14px;
+      padding: 12px 45px 12px 40px;
+    }
+  }
+</style>
+
+<script is:inline>
+  // 搜索功能实现
+  document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('search-input');
+    const searchClear = document.getElementById('search-clear');
+    const searchStatus = document.getElementById('search-status');
+    const searchResults = document.getElementById('search-results');
+
+    // 获取搜索索引
+    let searchIndex = window.SEARCH_INDEX || [];
+    if (!searchIndex.length) {
+      console.error('搜索索引未加载');
+    }
+
+    let searchTimeout;
+
+    // 高亮关键词
+    function highlightKeywords(text, keywords) {
+      if (!keywords.length) return text;
+
+      const regex = new RegExp(`(${keywords.map(escapeRegExp).join('|')})`, 'gi');
+      return text.replace(regex, '<span class="search-result-highlight">$1</span>');
+    }
+
+    function escapeRegExp(string) {
+      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    // 执行搜索
+    function performSearch(query) {
+      if (!query.trim()) {
+        showPlaceholder();
+        return;
+      }
+
+      const keywords = query.toLowerCase().split(/\s+/).filter(k => k.length > 0);
+
+      if (keywords.length === 0) {
+        showPlaceholder();
+        return;
+      }
+
+      // 搜索算法
+      const results = searchIndex.map(doc => {
+        let titleMatches = 0;
+        let contentMatches = 0;
+        let tagMatches = 0;
+        let categoryMatches = 0;
+
+        const titleLower = doc.title.toLowerCase();
+        const contentLower = doc.content.toLowerCase();
+        const descriptionLower = doc.description.toLowerCase();
+
+        // 标题匹配（权重最高）
+        keywords.forEach(keyword => {
+          const regex = new RegExp(keyword, 'gi');
+          const titleMatchArray = titleLower.match(regex);
+          titleMatches += titleMatchArray ? titleMatchArray.length : 0;
+
+          // 内容匹配
+          const contentMatchArray = contentLower.match(regex);
+          contentMatches += contentMatchArray ? contentMatchArray.length : 0;
+
+          // 描述匹配
+          const descMatchArray = descriptionLower.match(regex);
+          contentMatches += descMatchArray ? descMatchArray.length : 0;
+
+          // 标签匹配
+          if (doc.tags) {
+            const tagMatchArray = doc.tags.join(' ').toLowerCase().match(regex);
+            tagMatches += tagMatchArray ? tagMatchArray.length : 0;
+          }
+
+          // 分类匹配
+          if (doc.category) {
+            const categoryMatchArray = doc.category.toLowerCase().match(regex);
+            categoryMatches += categoryMatchArray ? categoryMatchArray.length : 0;
+          }
+        });
+
+        // 计算得分
+        const score = titleMatches * 10 + tagMatches * 5 + categoryMatches * 3 + contentMatches;
+
+        return {
+          doc,
+          score,
+          titleMatches,
+          contentMatches,
+          tagMatches,
+          categoryMatches,
+        };
+      }).filter(result => result.score > 0)
+        .sort((a, b) => b.score - a.score);
+
+      displayResults(results, keywords);
+    }
+
+    // 显示搜索结果
+    function displayResults(results, keywords) {
+      if (results.length === 0) {
+        searchResults.innerHTML = `
+          <div class="search-no-results">
+            <p>未找到匹配的文章</p>
+            <p class="search-hint">试试其他关键词</p>
+          </div>
+        `;
+        searchStatus.textContent = `找到 0 篇文章`;
+        return;
+      }
+
+      searchStatus.textContent = `找到 ${results.length} 篇文章`;
+
+      const resultsHTML = results.map(result => {
+        const { doc } = result;
+        const date = new Date(doc.date).toLocaleDateString('zh-CN');
+
+        return `
+          <a href="${doc.url}" class="search-result-item" style="display:block; padding:20px; margin-bottom:15px; background:#f9f9f9; border-radius:8px; transition:all 0.3s; cursor:pointer; text-decoration:none; color:inherit;">
+            <div class="search-result-title" style="font-size:18px; font-weight:600; color:#000; margin-bottom:8px;">${highlightKeywords(doc.title, keywords)}</div>
+            <div class="search-result-meta" style="font-size:13px; color:#666; margin-bottom:10px;">
+              <span style="margin-right:15px;"><i class="fa-regular fa-calendar"></i> ${date}</span>
+              ${doc.category ? `<span style="margin-right:15px;"><i class="fa-solid fa-folder"></i> ${doc.category}</span>` : ''}
+              ${doc.tags && doc.tags.length > 0 ? `<span style="margin-right:15px;"><i class="fa-solid fa-tags"></i> ${doc.tags.join(', ')}</span>` : ''}
+            </div>
+            <div class="search-result-description" style="font-size:14px; color:#333; line-height:1.6;">${highlightKeywords(doc.description, keywords)}</div>
+          </a>
+        `;
+      }).join('');
+
+      searchResults.innerHTML = resultsHTML;
+    }
+
+    // 显示占位符
+    function showPlaceholder() {
+      searchResults.innerHTML = `
+        <div class="search-placeholder">
+          <i class="fa-solid fa-search search-placeholder-icon"></i>
+          <p>输入关键词开始搜索</p>
+          <p class="search-hint">提示：可以搜索文章标题、内容、分类或标签</p>
+        </div>
+      `;
+      searchStatus.textContent = '';
+    }
+
+    // 事件监听
+    searchInput?.addEventListener('input', function(e) {
+      const query = e.target.value;
+
+      // 显示/隐藏清除按钮
+      if (searchClear) {
+        searchClear.style.display = query.length > 0 ? 'block' : 'none';
+      }
+
+      // 防抖搜索
+      clearTimeout(searchTimeout);
+      searchTimeout = window.setTimeout(() => {
+        performSearch(query);
+      }, 300);
+    });
+
+    // 清除按钮
+    searchClear?.addEventListener('click', function() {
+      if (searchInput) {
+        searchInput.value = '';
+        searchInput.focus();
+        showPlaceholder();
+        if (searchClear) {
+          searchClear.style.display = 'none';
+        }
+      }
+    });
+
+    // Enter 键搜索
+    searchInput?.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        const query = e.target.value;
+        performSearch(query);
+      }
+    });
+
+    // 也可以使用其他页面触发的搜索
+    window.addEventListener('triggerSearch', function(e) {
+      const query = e.detail.query;
+      if (searchInput) {
+        searchInput.value = query;
+        searchInput.focus();
+        performSearch(query);
+        if (searchClear) {
+          searchClear.style.display = 'block';
+        }
+      }
+    });
+  });
+</script>

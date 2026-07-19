@@ -1,0 +1,702 @@
+---
+import Header from '../components/NextHeader.astro';
+import Footer from '../components/NextFooter.astro';
+import { loadConfig } from '../lib/config';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const config = loadConfig();
+const { title = config.site.title, description = config.site.description } = Astro.props;
+const bgConfig = config.background;
+---
+
+<!doctype html>
+<html class="theme-next muse use-motion" lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2" />
+    <meta name="theme-color" content="#222" />
+    <meta name="description" content={description} />
+    <meta name="keywords" content="daliansky,黑果小兵,macOS,Hackintosh,黑苹果,linux,blog.daliansky.net" />
+    <title>{title}</title>
+
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.png" />
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/css/next.css" />
+    <link href="//fonts.googleapis.com/css?family=Noto+Serif+SC:300,300italic,400,400italic,700,700italic|Roboto+Mono:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet" />
+
+    <!-- Scripts -->
+    <script is:inline src="//fastly.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+    <link href="/lib/pace/pace-theme-clock.min.css?v=1.0.0" rel="stylesheet" />
+
+    <!-- 自定义时钟加载动画初始化 -->
+    <script is:inline>
+      // 自定义Pace.js的HTML结构
+      paceOptions = {
+        elements: false,
+        restartOnRequestAfter: false
+      };
+
+      // 创建炫酷时钟HTML结构
+      function createClockLoader() {
+        const paceActivity = document.querySelector('.pace-activity');
+        if (!paceActivity) return;
+
+        // 清空现有内容
+        paceActivity.innerHTML = '';
+
+        // 创建主时钟容器
+        const clock = document.createElement('div');
+        clock.className = 'pace-clock';
+
+        // 创建鎏金色内圈
+        const innerRing = document.createElement('div');
+        innerRing.className = 'pace-clock-inner-ring';
+        clock.appendChild(innerRing);
+
+        // 创建星空色表盘
+        const clockFace = document.createElement('div');
+        clockFace.className = 'pace-clock-face';
+
+        // 创建12个刻度
+        for (let i = 0; i < 12; i++) {
+          const mark = document.createElement('div');
+          mark.className = 'pace-clock-mark';
+          clockFace.appendChild(mark);
+        }
+
+        clock.appendChild(clockFace);
+
+        // 创建中心点
+        const center = document.createElement('div');
+        center.className = 'pace-clock-center';
+        clock.appendChild(center);
+
+        // 创建纺锤状分针
+        const hand = document.createElement('div');
+        hand.className = 'pace-clock-hand';
+        clock.appendChild(hand);
+
+        paceActivity.appendChild(clock);
+      }
+
+      // 监听Pace.js事件
+      document.addEventListener('DOMContentLoaded', function() {
+        createClockLoader();
+
+        // 当Pace激活时重新创建时钟
+        if (window.Pace) {
+          Pace.on('start', function() {
+            const paceActivity = document.querySelector('.pace-activity');
+            if (paceActivity) {
+              paceActivity.classList.remove('pace-clock-loaded');
+              if (!paceActivity.querySelector('.pace-clock')) {
+                setTimeout(createClockLoader, 50);
+              }
+            }
+          });
+
+          // 当Pace完成时，停留1.8秒后添加飞出动画类
+          Pace.on('done', function() {
+            const paceActivity = document.querySelector('.pace-activity');
+            if (paceActivity) {
+              // 停留1.8秒后开始飞出动画
+              setTimeout(function() {
+                paceActivity.classList.add('pace-clock-loaded');
+              }, 1800);
+            }
+          });
+
+          // 确保页面加载时创建时钟
+          setTimeout(createClockLoader, 100);
+        }
+      });
+    </script>
+  </head>
+
+  <body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+    <div class="container">
+      <Header />
+
+      <!-- 背景图片/视频/播放器 -->
+      {bgConfig.mode === 'player' && bgConfig.player.enabled ? (
+        <>
+          <div id={bgConfig.player.container_id} class="page-background-player"></div>
+          <div id="doge-player-config" style="display:none;"
+               data-container-id={bgConfig.player.container_id}
+               data-user-id={bgConfig.player.user_id}
+               data-vcode={bgConfig.player.vcode}
+               data-auto-play={bgConfig.player.auto_play}>
+          </div>
+          <script is:inline>
+            if (!window.dogePlayerLoaded) {
+              window.dogePlayerLoaded = true;
+              const configDiv = document.getElementById('doge-player-config');
+              const script = document.createElement('script');
+              script.src = 'https://player.dogecloud.com/js/loader';
+              script.onload = function() {
+                if (typeof DogePlayer !== 'undefined' && configDiv) {
+                  new DogePlayer({
+                    container: document.getElementById(configDiv.dataset.containerId),
+                    userId: parseInt(configDiv.dataset.userId),
+                    vcode: configDiv.dataset.vcode,
+                    autoPlay: configDiv.dataset.autoPlay === 'true'
+                  });
+                }
+              };
+              document.head.appendChild(script);
+            }
+          </script>
+        </>
+      ) : bgConfig.mode === 'mp4' && bgConfig.mp4.url ? (
+        <video
+          id="background-video"
+          class="page-background-video"
+          autoplay
+          loop
+          muted
+          playsinline
+          preload="auto"
+          style={`opacity: ${bgConfig.mp4.opacity};`}
+          crossorigin="anonymous"
+        >
+          <source src={bgConfig.mp4.url} type="video/mp4" />
+        </video>
+      ) : (
+        <div
+          class="page-background"
+          style={`background-image: url('${bgConfig.png.url}'); background-size: ${bgConfig.png.size}; background-position: ${bgConfig.png.position}; background-attachment: ${bgConfig.png.attachment}; opacity: ${bgConfig.png.opacity};`}
+        ></div>
+      )}
+
+      <main id="main" class="main">
+        <div class="main-inner">
+          <div class="content-wrap">
+            <div id="content" class="content">
+              <slot />
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <Footer />
+
+      <!-- 返回顶部 -->
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        <span id="scrollpercent">
+          <span>0</span>%
+        </span>
+      </div>
+    </div>
+
+    <!-- Code highlighting - Xcode Light style (atom-one-light) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/atom-one-light.min.css" />
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+  </body>
+</html>
+
+<style is:global>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+  }
+
+  .container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 10;
+  }
+
+  .main {
+    flex: 1;
+    position: relative;
+    z-index: 10;
+  }
+
+  .main-inner {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 20px 20px 40px;
+    position: relative;
+    z-index: 10;
+  }
+
+  /* 确保头部和导航栏在背景图片之上 */
+  .header {
+    position: relative;
+    z-index: 100;
+  }
+
+  .site-nav {
+    position: relative;
+    z-index: 100;
+  }
+
+  /* 页脚 */
+  .footer {
+    position: relative;
+    z-index: 100;
+  }
+
+  /* 翻页 */
+  .pagination {
+    position: relative;
+    z-index: 100;
+  }
+
+  /* 背景图片 - 始终在最底层 */
+  .page-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-repeat: no-repeat;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* 背景视频 - 始终在最底层 */
+  .page-background-video {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* 背景播放器 - 始终在最底层 */
+  .page-background-player {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .page-background-player video,
+  .page-background-player iframe,
+  .page-background-player .dplayer-video-wrap {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+  }
+
+  /* 移动端背景图片优化 */
+  @media (max-width: 767px) {
+    .page-background {
+      position: fixed;
+      background-size: cover;
+      background-position: center top;
+    }
+  }
+
+  /* 返回顶部按钮 */
+  .back-to-top {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 40px;
+    height: 40px;
+    background: #222;
+    color: #fff;
+    text-align: center;
+    line-height: 40px;
+    border-radius: 4px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 1000;
+  }
+
+  .back-to-top.back-to-top-on {
+    opacity: 1;
+  }
+
+  #scrollpercent {
+    font-size: 12px;
+  }
+
+  /* Code styling - reset first */
+  code {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  }
+
+  /* Code blocks - use atom-one-light theme colors */
+  pre {
+    background: #fafafa !important;
+    border: 1px solid #e1e1e1;
+    border-radius: 4px;
+    padding: 15px;
+    overflow-x: auto;
+    display: block !important;
+  }
+
+  pre code {
+    color: #383a42 !important;
+    background: transparent !important;
+    padding: 0 !important;
+    font-size: 14px;
+    line-height: 1.5;
+    display: block !important;
+  }
+
+  /* Inline code - purple-red color (#c7254e) */
+  /* Use more specific selectors to avoid matching HTML tags */
+  p code, li code, td code, th code,
+  .post-body code, .post-excerpt code,
+  h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {
+    color: #c7254e !important;
+    background: #f9f2f4;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.9em;
+  }
+
+  /* CRITICAL: Override for code blocks - must come after inline code rules */
+  pre code {
+    color: #383a42 !important;
+    background: transparent !important;
+    padding: 0 !important;
+    display: block !important;
+  }
+
+  /* 时钟加载动画阴影 */
+  .pace-clock {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .pace-clock-inner-ring,
+  .pace-clock-face,
+  .pace-clock-center,
+  .pace-clock-hand {
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  /* 容器区块样式 - 统一格式 */
+  blockquote.info,
+  blockquote.note,
+  blockquote.warning,
+  blockquote.danger,
+  blockquote.tip,
+  blockquote.success,
+  blockquote.primary,
+  blockquote.flat {
+    margin: 32px 0;
+    padding: 12px 16px;
+    border-left: 8px solid;
+    border-radius: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  blockquote.info {
+    border-left-color: #5bc0de;
+    background: #e3f2fd;
+  }
+
+  blockquote.note {
+    border-left-color: #6c757d;
+    background: #f8f9fa;
+  }
+
+  blockquote.warning {
+    border-left-color: #ff9800;
+    background: #fff3e0;
+  }
+
+  blockquote.danger {
+    border-left-color: #dc3545;
+    background: #ffebee;
+  }
+
+  blockquote.tip {
+    border-left-color: #4caf50;
+    background: #e8f5e9;
+  }
+
+  blockquote.success {
+    border-left-color: #28a745;
+    background: #d4edda;
+  }
+
+  blockquote.primary {
+    border-left-color: #34495e;
+    background: #eaedf0;
+  }
+
+  blockquote.flat {
+    border-left-color: #95a5a6;
+    background: #f5f5f5;
+  }
+
+  /* 容器区块内的元素样式 */
+  blockquote.info p,
+  blockquote.note p,
+  blockquote.warning p,
+  blockquote.danger p,
+  blockquote.tip p,
+  blockquote.success p,
+  blockquote.primary p,
+  blockquote.flat p {
+    margin: 0;
+  }
+
+  blockquote.info strong,
+  blockquote.note strong,
+  blockquote.warning strong,
+  blockquote.danger strong,
+  blockquote.tip strong,
+  blockquote.success strong,
+  blockquote.primary strong {
+    color: inherit;
+  }
+
+  /* 点击水波纹效果 */
+  .click-ripple {
+    position: fixed;
+    border-radius: 50%;
+    pointer-events: none;
+    background: radial-gradient(circle, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 70%);
+    transform: translate(-50%, -50%);
+    animation: ripple-expand 0.6s ease-out forwards;
+    z-index: 99999;
+  }
+
+  @keyframes ripple-expand {
+    0% {
+      width: 0;
+      height: 0;
+      opacity: 1;
+    }
+    100% {
+      width: 18px;
+      height: 18px;
+      opacity: 0;
+    }
+  }
+</style>
+
+    <script is:inline>
+      // 动态标题效果
+      const originalTitle = document.title;
+      let isTabActive = true;
+
+      // 监听页面可见性变化
+      document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+          // 标签页失去焦点 - 用户切换到其他标签页
+          isTabActive = false;
+          document.title = 'zzz睡觉了晚安';
+        } else {
+          // 标签页获得焦点 - 用户回到这个标签页
+          isTabActive = true;
+          document.title = '打起精神来ing';
+          // 1.5秒后恢复原标题
+          setTimeout(function() {
+            if (isTabActive) {
+              document.title = originalTitle;
+            }
+          }, 1500);
+        }
+      });
+
+      // 监听窗口焦点变化（额外保障）
+      window.addEventListener('focus', function() {
+        if (!isTabActive) {
+          isTabActive = true;
+          document.title = '打起精神来ing';
+          setTimeout(function() {
+            if (isTabActive) {
+              document.title = originalTitle;
+            }
+          }, 1500);
+        }
+      });
+
+      window.addEventListener('blur', function() {
+        if (!document.hidden) {
+          // 某些情况下 blur 会触发但 hidden 为 false
+          isTabActive = false;
+          document.title = 'zzz睡觉了晚安';
+        }
+      });
+    </script>
+
+<script is:inline>
+      // Back to top functionality
+      document.addEventListener('DOMContentLoaded', function() {
+        const backToTop = document.querySelector('.back-to-top');
+        const scrollpercent = document.querySelector('#scrollpercent span');
+
+        window.addEventListener('scroll', function() {
+          const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+          const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+          const scrollPercent = Math.round((scrollTop / scrollHeight) * 100);
+
+          if (scrollpercent) {
+            scrollpercent.textContent = scrollPercent;
+          }
+
+          if (scrollTop > 300) {
+            backToTop?.classList.add('back-to-top-on');
+          } else {
+            backToTop?.classList.remove('back-to-top-on');
+          }
+        });
+
+        backToTop?.addEventListener('click', function() {
+          window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+          });
+        });
+
+        // Apply highlight.js to code blocks
+        if (typeof hljs !== 'undefined') {
+          document.querySelectorAll('pre code').forEach((block) => {
+            hljs.highlightElement(block);
+          });
+        }
+
+        // 确保背景视频自动播放
+        const backgroundVideo = document.getElementById('background-video');
+        if (backgroundVideo) {
+          let playAttemptCount = 0;
+          const maxPlayAttempts = 3;
+
+          // 尝试播放视频
+          const playVideo = () => {
+            if (playAttemptCount >= maxPlayAttempts) {
+              console.log('达到最大播放尝试次数');
+              return;
+            }
+
+            playAttemptCount++;
+
+            backgroundVideo.play().then(() => {
+              console.log('背景视频开始播放');
+              // 播放成功，设置较低的播放速率以避免卡顿
+              if (backgroundVideo.playbackRate > 1.0) {
+                backgroundVideo.playbackRate = 1.0;
+              }
+            }).catch(error => {
+              console.log('自动播放被阻止，尝试其他方法:', error);
+              // 如果自动播放被阻止，添加点击监听器
+              if (playAttemptCount === 1) {
+                document.addEventListener('click', function playOnClick() {
+                  backgroundVideo.play();
+                  document.removeEventListener('click', playOnClick);
+                }, { once: true });
+              }
+            });
+          };
+
+          // 监听视频加载状态
+          backgroundVideo.addEventListener('loadeddata', () => {
+            console.log('视频数据已加载');
+            // 视频数据加载完成后尝试播放
+            playVideo();
+          });
+
+          backgroundVideo.addEventListener('canplay', () => {
+            console.log('视频可以播放');
+          });
+
+          backgroundVideo.addEventListener('canplaythrough', () => {
+            console.log('视频可以流畅播放');
+          });
+
+          // 监听播放进度，防止卡顿
+          backgroundVideo.addEventListener('progress', () => {
+            // 视频正在加载
+          });
+
+          // 监听播放速率
+          backgroundVideo.addEventListener('ratechange', () => {
+            console.log('播放速率:', backgroundVideo.playbackRate);
+          });
+
+          // 监听视频状态
+          backgroundVideo.addEventListener('suspend', () => {
+            console.log('视频加载被挂起');
+            // 视频加载被挂起，再次尝试播放
+            playVideo();
+          });
+
+          backgroundVideo.addEventListener('stalled', () => {
+            console.log('视频加载停滞');
+          });
+
+          backgroundVideo.addEventListener('waiting', () => {
+            console.log('视频等待数据');
+          });
+
+          backgroundVideo.addEventListener('ended', () => {
+            // 视频播放结束，重新开始（虽然有loop属性，但为了保险）
+            console.log('视频播放结束，重新开始');
+            backgroundVideo.currentTime = 0;
+            backgroundVideo.play();
+          });
+
+          // 页面加载完成后立即尝试播放
+          if (backgroundVideo.readyState >= 2) {
+            // 视频已经有足够的数据
+            playVideo();
+          }
+        }
+      });
+    </script>
+
+    <!-- 水波纹和心电图效果 -->
+    <script is:inline>
+      document.addEventListener('DOMContentLoaded', function() {
+        // ========== 水波纹点击效果 ==========
+        function createRipple(e) {
+          const ripple = document.createElement('div');
+          ripple.className = 'click-ripple';
+
+          // 获取点击位置
+          const x = e.clientX;
+          const y = e.clientY;
+
+          ripple.style.left = x + 'px';
+          ripple.style.top = y + 'px';
+
+          document.body.appendChild(ripple);
+
+          // 动画结束后移除元素
+          setTimeout(() => {
+            ripple.remove();
+          }, 600);
+        }
+
+        // 监听所有鼠标点击事件（左键和右键）
+        document.addEventListener('mousedown', function(e) {
+          // 只在主点击（左键0或右键2）时触发
+          if (e.button === 0 || e.button === 2) {
+            createRipple(e);
+          }
+        });
+      });
+    </script>

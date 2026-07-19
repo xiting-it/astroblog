@@ -1,0 +1,145 @@
+---
+import NextLayout from '../../layouts/NextLayout.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  try {
+    const allPosts = await getCollection('blog');
+    const categories = new Set<string>();
+
+    allPosts.forEach((post) => {
+      if (post.data.draft !== true && post.data.category) {
+        categories.add(post.data.category);
+      }
+    });
+
+    return Array.from(categories).map((category) => ({
+      params: { category },
+    }));
+  } catch (error) {
+    console.error('Error generating category paths:', error);
+    return [];
+  }
+}
+
+const { category } = Astro.params;
+
+// Safe decode category name
+const decodedCategory = decodeURIComponent(category);
+
+// Get posts for this category
+let categoryPosts: any[] = [];
+try {
+  const allPosts = await getCollection('blog');
+  categoryPosts = allPosts
+    .filter(post =>
+      post.data.draft !== true &&
+      post.data.category === decodedCategory
+    )
+    .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+} catch (error) {
+  console.error(`Error fetching posts for category "${category}":`, error);
+  categoryPosts = [];
+}
+---
+
+<NextLayout title={`分类: ${category}`}>
+  <div class="category-page">
+    <div class="category-inner">
+      <h1 class="category-title">
+        <i class="fa-solid fa-layer-group"></i> {category}
+      </h1>
+
+      {categoryPosts.length === 0 ? (
+        <div class="category-empty">
+          <p>该分类下暂无文章</p>
+          <a href="/" style="color: #222; text-decoration: underline;">返回首页</a>
+        </div>
+      ) : (
+        <div class="category-posts">
+          {categoryPosts.map((post) => (
+            <article class="post-item">
+              <a href={`/blog/${post.id.replace('.md', '')}/`} class="post-link">
+                <span class="post-date">
+                  {new Date(post.data.pubDate).toLocaleDateString('zh-CN')}
+                </span>
+                <span class="post-title">{post.data.title}</span>
+              </a>
+            </article>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+</NextLayout>
+
+<style>
+  .category-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px 20px;
+  }
+
+  .category-inner {
+    background: #fff;
+    padding: 40px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .category-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 0 25px;
+    color: #222;
+  }
+
+  .category-title i {
+    color: #999;
+    margin-right: 10px;
+  }
+
+  .category-empty {
+    text-align: center;
+    padding: 40px 0;
+    color: #999;
+  }
+
+  .category-posts {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .post-item {
+    border-bottom: 1px solid #eee;
+  }
+
+  .post-item:last-child {
+    border-bottom: none;
+  }
+
+  .post-link {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 0;
+    text-decoration: none;
+    color: #333;
+    transition: all 0.3s;
+  }
+
+  .post-link:hover {
+    color: #222;
+  }
+
+  .post-date {
+    color: #999;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .post-title {
+    font-size: 16px;
+    font-weight: 500;
+  }
+</style>

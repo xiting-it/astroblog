@@ -1,0 +1,98 @@
+---
+import NextLayout from '../layouts/NextLayout.astro';
+import PostCardNext from '../components/PostCardNext.astro';
+import { getCollection } from 'astro:content';
+
+// 从 blog 目录获取所有已发布的文章
+const allPosts = (await getCollection('blog'))
+  .filter(post => {
+    // 只显示已发布的文章
+    if (post.data.draft === true) return false;
+    return true;
+  })
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+// 分页设置
+const POSTS_PER_PAGE = 5;
+const currentPage = 1;
+const startIndex = (currentPage - 1) * POSTS_PER_PAGE;
+const endIndex = startIndex + POSTS_PER_PAGE;
+const posts = allPosts.slice(startIndex, endIndex);
+const totalPages = Math.ceil(allPosts.length / POSTS_PER_PAGE);
+
+// 生成页码
+const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+---
+
+<NextLayout>
+  <section id="posts" class="posts-expand">
+    {posts.length === 0 ? (
+      <div style="text-align: center; color: #999; padding: 40px;">
+        暂无文章
+      </div>
+    ) : (
+      posts.map((post) => (
+        <PostCardNext
+          title={post.data.title}
+          url={`/blog/${post.id.replace('.md', '')}/`}
+          date={post.data.pubDate.toLocaleDateString('zh-CN')}
+          updatedDate={post.data.updatedDate?.toLocaleDateString('zh-CN')}
+          categories={post.data.category ? [{ name: post.data.category, url: `/categories/${post.data.category}` }] : []}
+          excerpt={post.data.description}
+          backgroundImage={post.data.backgroundImage}
+          isPinned={false}
+          showFullMeta={false}
+        />
+      ))
+    )}
+  </section>
+
+  {totalPages > 1 && (
+    <nav class="pagination">
+      {pages.map((page) => (
+        page === currentPage ? (
+          <span class="page-number current">{page}</span>
+        ) : (
+          <a class="page-number" href={`/page/${page}`}>{page}</a>
+        )
+      ))}
+    </nav>
+  )}
+</NextLayout>
+
+<style>
+  .posts-expand {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 20px 26px 40px;
+  }
+
+  .pagination {
+    margin: 60px 0;
+    text-align: center;
+  }
+
+  .page-number,
+  .extend {
+    display: inline-block;
+    margin: 0 5px;
+    padding: 10px 15px;
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    text-decoration: none;
+    color: #333;
+    transition: all 0.3s;
+  }
+
+  .page-number.current {
+    background: #222;
+    color: #fff;
+    border-color: #222;
+  }
+
+  .page-number:hover,
+  .extend:hover {
+    background: #f5f5f5;
+  }
+</style>

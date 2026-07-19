@@ -1,0 +1,381 @@
+---
+import { loadConfig } from '../lib/config';
+
+// 图标按路径映射，属于表现层（不在 site-config.yaml 里）
+const navIconMap: Record<string, string> = {
+  '/': 'fa-solid fa-house',
+  '/archive': 'fa-solid fa-box-archive',
+  '/categories': 'fa-solid fa-layer-group',
+  '/tags': 'fa-solid fa-tags',
+  '/about': 'fa-solid fa-circle-info',
+};
+
+const { navigation } = loadConfig();
+const menuItems = navigation.map((item) => ({
+  name: item.name,
+  path: item.url,
+  icon: navIconMap[item.url] || 'fa-solid fa-link',
+}));
+---
+
+<header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="header-inner">
+    <div class="site-brand-wrapper">
+      <div class="site-meta">
+        <div class="custom-logo-site-title">
+          <a href="/" class="brand" rel="start">
+            <span class="site-title">XitingのBlog</span>
+          </a>
+        </div>
+        <p class="site-subtitle">Agent macOS LLM</p>
+      </div>
+
+      <div class="site-nav-toggle">
+        <button aria-label="切换导航栏">
+          <span class="btn-bar"></span>
+          <span class="btn-bar"></span>
+          <span class="btn-bar"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+    {menuItems.map((item) => (
+      <li class="menu-item" data-path={item.path}>
+        <a href={item.path} rel="section">
+          <i class={`menu-item-icon fa fa-fw ${item.icon}`}></i>
+          {item.name}
+        </a>
+      </li>
+    ))}
+    <li class="menu-item menu-item-search">
+      <a href="/search" rel="section">
+        <i class="menu-item-icon fa-solid fa-magnifying-glass fa-fw"></i>
+        搜索
+      </a>
+    </li>
+  </ul>
+</nav>
+
+<style>
+  .local-search-popup-show {
+    display: block !important;
+  }
+
+  /* 导航栏样式调整 */
+  .site-nav {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background: #e8e8e8 !important;
+  }
+
+  .menu-item {
+    position: relative;
+  }
+
+  .menu-item a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 15px;
+    font-size: 14px;
+    color: #000;
+    position: relative;
+    border-radius: 4px;
+    transition: all 0.9s ease;
+  }
+
+  /* 背景框伪元素 */
+  .menu-item a::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: calc(100% - 12px);
+    height: calc(100% - 12px);
+    background: transparent;
+    border-radius: 3px;
+    transition: all 0.9s ease;
+    z-index: -1;
+  }
+
+  /* 悬浮效果 */
+  .menu-item a:hover {
+    color: #222;
+  }
+
+  .menu-item a:hover::before {
+    background: rgba(110, 106, 106, 0.15);
+  }
+
+  /* 当前页面激活状态 */
+  .menu-item.menu-item-active a {
+    color: #222;
+    font-weight: 600;
+  }
+
+  .menu-item.menu-item-active a::before {
+    background: rgba(110, 106, 106, 0.2);
+  }
+
+  .menu-item-icon {
+    margin: 0;
+  }
+
+  /* 搜索按钮样式 */
+  .menu-item-search a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 15px;
+    border-radius: 4px;
+    transition: all 0.9s ease;
+    position: relative;
+  }
+
+  .menu-item-search a::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: calc(100% - 12px);
+    height: calc(100% - 12px);
+    background: transparent;
+    border-radius: 3px;
+    transition: all 0.9s ease;
+    z-index: -1;
+  }
+
+  .menu-item-search a:hover::before {
+    background: rgba(110, 106, 106, 0.15);
+  }
+
+  /* 头部样式调整 */
+  .site-meta {
+    padding: 20px 0 10px;
+  }
+
+  .site-title {
+    font-size: 38px;
+  }
+
+  .site-subtitle {
+    color: #fff;
+  }
+
+  /* 移动端响应式导航栏 */
+  .site-nav-toggle {
+    display: none;
+  }
+
+  @media (max-width: 767px) {
+    .site-nav-toggle {
+      display: block;
+      position: absolute;
+      top: 15px;
+      right: 20px;
+      z-index: 9999;
+    }
+
+    .site-nav-toggle button {
+      background: #000 !important;
+      border: none;
+      border-radius: 0 !important;
+      padding: 0;
+      cursor: move;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      width: 40px;
+      height: 40px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-bar {
+      width: 20px;
+      height: 2px;
+      background: #fff !important;
+      transition: all 0.3s ease;
+    }
+
+    .site-nav-toggle.active .btn-bar:nth-child(1) {
+      transform: rotate(45deg) translate(5px, 5px);
+    }
+
+    .site-nav-toggle.active .btn-bar:nth-child(2) {
+      opacity: 0;
+    }
+
+    .site-nav-toggle.active .btn-bar:nth-child(3) {
+      transform: rotate(-45deg) translate(5px, -5px);
+    }
+
+    .site-nav {
+      position: static !important;
+      width: 100%;
+      height: auto;
+      background: #fff !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+      border-top: 1px solid #ddd !important;
+      display: block !important;
+    }
+
+    .site-nav .menu {
+      flex-direction: column;
+      padding: 0;
+      max-height: 0 !important;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+
+    .site-nav.active .menu {
+      max-height: 1000px !important;
+      padding: 10px 0 !important;
+      display: flex !important;
+    }
+
+    .site-nav .menu-item {
+      width: 100%;
+      text-align: center;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .site-nav .menu-item a {
+      width: 100%;
+      padding: 15px 10px;
+      border-radius: 0;
+      color: #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 14px;
+    }
+
+    .site-nav .menu-item a:hover {
+      background: #f5f5f5;
+    }
+
+    .site-nav-toggle button {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 8px 12px;
+    }
+
+    .site-nav-toggle.active .btn-bar {
+      background: #333;
+    }
+  }
+
+  /* 遮罩层 - 已禁用 */
+  .site-nav-overlay {
+    display: none !important;
+  }
+</style>
+
+<div class="site-nav-overlay" id="siteNavOverlay"></div>
+<script is:inline>
+  // Search popup functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const searchBtn = document.querySelector('.menu-item-search');
+    const searchPopup = document.querySelector('.search-popup');
+    const closeBtn = document.querySelector('.popup-btn-close');
+
+    searchBtn?.addEventListener('click', function() {
+      // 允许默认跳转到搜索页面
+      // 不阻止默认行为，让链接正常工作
+    });
+
+    closeBtn?.addEventListener('click', function() {
+      searchPopup?.classList.remove('local-search-popup-show');
+    });
+
+    // Active menu item detection
+    const currentPath = window.location.pathname;
+    const menuItems = document.querySelectorAll('.menu-item[data-path]');
+
+    menuItems.forEach(item => {
+      const itemPath = item.getAttribute('data-path');
+
+      // Check if current path matches menu item path
+      if (currentPath === itemPath || (itemPath !== '/' && currentPath.startsWith(itemPath + '/'))) {
+        item.classList.add('menu-item-active');
+      }
+    });
+
+    // Mobile navigation toggle
+    const navToggle = document.querySelector('.site-nav-toggle button');
+    const siteNav = document.querySelector('.site-nav');
+
+    function toggleNav() {
+      if (navToggle) navToggle.classList.toggle('active');
+      if (siteNav) siteNav.classList.toggle('active');
+    }
+
+    if (navToggle) {
+      navToggle.addEventListener('click', function() {
+        // 如果正在拖动，不触发点击事件
+        if (navToggle.classList.contains('dragging')) {
+          return;
+        }
+        toggleNav();
+      });
+    }
+
+    // 拖动功能
+    let isDragging = false;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    if (navToggle) {
+      navToggle.addEventListener('mousedown', function(e) {
+        isDragging = true;
+
+        const rect = navToggle.getBoundingClientRect();
+        offsetX = e.clientX - rect.left;
+        offsetY = e.clientY - rect.top;
+
+        navToggle.classList.add('dragging');
+        e.preventDefault();
+      });
+
+      document.addEventListener('mousemove', function(e) {
+        if (!isDragging || !navToggle) return;
+
+        const x = e.clientX - offsetX;
+        const y = e.clientY - offsetY;
+
+        // 限制在屏幕范围内
+        const maxX = window.innerWidth - 40;
+        const maxY = window.innerHeight - 40;
+
+        navToggle.style.left = Math.max(0, Math.min(x, maxX)) + 'px';
+        navToggle.style.top = Math.max(0, Math.min(y, maxY)) + 'px';
+        navToggle.style.right = 'auto';
+      });
+
+      document.addEventListener('mouseup', function() {
+        if (isDragging && navToggle) {
+          isDragging = false;
+          navToggle.classList.remove('dragging');
+        }
+      });
+    }
+
+    // Close nav when clicking on menu items
+    const mobileMenuItems = document.querySelectorAll('.site-nav .menu-item a');
+    mobileMenuItems.forEach((item) => {
+      item.addEventListener('click', function() {
+        if (window.innerWidth <= 767 && siteNav && siteNav.classList.contains('active')) {
+          toggleNav();
+        }
+      });
+    });
+  });
+</script>

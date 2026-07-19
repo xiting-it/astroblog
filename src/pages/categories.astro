@@ -1,0 +1,114 @@
+---
+import NextLayout from '../layouts/NextLayout.astro';
+import { getCollection } from 'astro:content';
+
+// 获取所有文章并提取分类
+const allPosts = await getCollection('blog');
+const categoryMap = new Map<string, number>();
+
+allPosts.forEach((post) => {
+  if (post.data.category) {
+    const count = categoryMap.get(post.data.category) || 0;
+    categoryMap.set(post.data.category, count + 1);
+  }
+});
+
+// 转换为数组格式
+const categoriesData = Array.from(categoryMap.entries()).map(([name, post_count]) => ({
+  slug: name,
+  name,
+  post_count,
+})).sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
+---
+
+<NextLayout title="分类">
+  <div class="categories-page">
+    <div class="categories-inner">
+      <h1 class="categories-title">分类</h1>
+
+      {categoriesData.length === 0 ? (
+        <div class="categories-empty">
+          <p>暂无分类</p>
+        </div>
+      ) : (
+        <div class="categories-list">
+          {categoriesData.map((category) => (
+            <a href={`/categories/${category.slug}`} class="category-item">
+              <span class="category-name">{category.name}</span>
+              <span class="category-count">{category.post_count || 0}</span>
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+</NextLayout>
+
+<style>
+  .categories-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px 20px;
+  }
+
+  .categories-inner {
+    background: #fff;
+    padding: 40px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .categories-title {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 30px;
+    color: #222;
+  }
+
+  .categories-empty {
+    text-align: center;
+    padding: 40px 0;
+    color: #999;
+  }
+
+  .categories-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .category-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: #f5f5f5;
+    border-radius: 4px;
+    text-decoration: none;
+    color: #333;
+    transition: all 0.3s;
+  }
+
+  .category-item:hover {
+    background: #222;
+    color: #fff;
+    transform: translateX(5px);
+  }
+
+  .category-name {
+    font-size: 15px;
+    font-weight: 500;
+  }
+
+  .category-count {
+    font-size: 13px;
+    color: #999;
+    background: rgba(0, 0, 0, 0.1);
+    padding: 4px 10px;
+    border-radius: 12px;
+  }
+
+  .category-item:hover .category-count {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+  }
+</style>

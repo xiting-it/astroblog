@@ -1,0 +1,56 @@
+site:
+  title: "Xiting's Blog"
+  description: '黑果小兵,daliansky,blog.daliansky.net,macOS,Hackintosh,黑苹果,linux'
+  keywords: 'daliansky,黑果小兵,macOS,Hackintosh,黑苹果,linux,blog.daliansky.net'
+  author: 'Xiting'
+
+background:
+  mode: 'mp4'
+  player:
+    enabled: false
+    container_id: ''
+    user_id: 0
+    vcode: ''
+    auto_play: true
+  png:
+    url: 'https://a1.boltp.com/2026/05/06/69fb579073a05.png'
+    opacity: 0.85
+    size: 'cover'
+    position: 'center'
+    attachment: 'fixed'
+  mp4:
+    url: 'https://pan.xitingit.top/kkovo_2.mp4'
+    opacity: 0.85
+    autoplay: true
+    loop: true
+    muted: true
+
+header:
+  title: "Xiting's Blog"
+  subtitle: 'Stay Hungry, Stay Foolish'
+
+navigation:
+  - name: '首页'
+    url: '/'
+  - name: '归档'
+    url: '/archive'
+  - name: '分类'
+    url: '/categories'
+  - name: '标签'
+    url: '/tags'
+  - name: '关于'
+    url: '/about'
+
+footer:
+  copyright: '© 2024 Xiting. All rights reserved.'
+  powered_by: 'Astro'
+
+search:
+  enabled: true
+  placeholder: '搜索文章...'
+
+features:
+  back_to_top: true
+  pace_loading: true
+  code_highlight: true
+  lazy_load_images: false

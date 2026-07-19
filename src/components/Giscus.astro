@@ -1,0 +1,89 @@
+---
+/**
+ * Giscus 评论组件
+ *
+ * 配置说明：
+ * 1. 在您的 GitHub 仓库中启用 Discussions 功能
+ * 2. 访问 https://github.com/apps/giscus 安装 giscus 应用
+ * 3. 访问 https://giscus.app 获取您的配置参数
+ * 4. 将下面的 data-repo 等参数替换为您的实际配置
+ */
+interface Props {
+  lang?: string;
+  theme?: string;
+}
+
+const { lang = 'zh-CN', theme = 'light' } = Astro.props;
+
+// 配置参数 - 您的 GitHub 仓库配置
+const giscusConfig = {
+  repo: 'mothorror/giscus', // 仓库
+  repoId: 'R_kgDOSXHyQA', // 仓库 ID
+  category: 'Announcements', // 讨论分类
+  categoryId: 'DIC_kwDOSXHyQM4C8h3B', // 分类 ID
+  mapping: 'pathname', // 使用页面路径作为映射
+  strict: '0', // 非严格模式
+  reactionsEnabled: '0', // 禁用反应
+  emitMetadata: '0', // 不发出元数据
+  inputPosition: 'bottom', // 输入框在底部
+  theme: theme, // 主题
+  lang: lang, // 语言
+  loading: 'lazy', // 懒加载
+};
+---
+
+<div class="giscus-container">
+  <script is:inline src="https://giscus.app/client.js"
+    data-repo={giscusConfig.repo}
+    data-repo-id={giscusConfig.repoId}
+    data-category={giscusConfig.category}
+    data-category-id={giscusConfig.categoryId}
+    data-mapping={giscusConfig.mapping}
+    data-strict={giscusConfig.strict}
+    data-reactions-enabled={giscusConfig.reactionsEnabled}
+    data-emit-metadata={giscusConfig.emitMetadata}
+    data-input-position={giscusConfig.inputPosition}
+    data-theme={giscusConfig.theme}
+    data-lang={giscusConfig.lang}
+    data-loading={giscusConfig.loading}
+    crossorigin="anonymous"
+    async>
+  </script>
+</div>
+
+<style>
+  .giscus-container {
+    /* 移除 padding，由父容器 .comment-block 控制 */
+  }
+
+  /* 隐藏 Giscus 顶部标识 */
+  :global(.giscus-frame a[href*="giscus.app"]) {
+    display: none !important;
+  }
+
+  /* 隐藏 Giscus 底部页脚和表情图案 */
+  :global(.giscus-frame footer),
+  :global(.giscus-frame .giscus-footer),
+  :global(.giscus-frame .giscus-footer *) {
+    display: none !important;
+  }
+
+  /* 隐藏点赞/反应功能 */
+  :global(.giscus-frame .reaction-reactions),
+  :global(.giscus-frame .reactions-container),
+  :global(.giscus-frame .giscus-reactions) {
+    display: none !important;
+  }
+
+  /* 隐藏表情选择器 */
+  :global(.giscus-frame .giscus-emoji),
+  :global(.giscus-frame .emoji-picker),
+  :global(.giscus-frame .toolbar-item-emoji) {
+    display: none !important;
+  }
+
+  /* Giscus 主题自定义 */
+  :global(.giscus-frame) {
+    border-radius: 8px;
+  }
+</style>
