@@ -2,6 +2,8 @@ import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
 
 // 博客文章内容验证
+// 注意：astro/loaders 的 glob 不支持 ignore 参数
+// 如果用 Obsidian 等工具的 _templates/ 等辅助目录，请用更精确的 pattern 或者建子目录区分
 const blog = defineCollection({
   loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/blog' }),
   schema: () => z.object({

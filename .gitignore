@@ -33,6 +33,10 @@ Thumbs.db
 *.swp
 *.swo
 
+# Obsidian（如使用 Obsidian 编辑 src/content/blog）
+.obsidian/
+.trash/
+
 # PM2
 .pm2/
 

@@ -2,88 +2,115 @@
 /**
  * Giscus 评论组件
  *
- * 配置说明：
- * 1. 在您的 GitHub 仓库中启用 Discussions 功能
- * 2. 访问 https://github.com/apps/giscus 安装 giscus 应用
- * 3. 访问 https://giscus.app 获取您的配置参数
- * 4. 将下面的 data-repo 等参数替换为您的实际配置
+ * 配置来源：site-config.yaml 的 comment 字段
+ * 仓库：xiting-it/commentgiscus
  */
+import { loadConfig } from '../lib/config';
+
 interface Props {
-  lang?: string;
-  theme?: string;
+  /** 当前页面路径，用作 Giscus 的 pathname 映射 */
+  path?: string;
 }
 
-const { lang = 'zh-CN', theme = 'light' } = Astro.props;
-
-// 配置参数 - 您的 GitHub 仓库配置
-const giscusConfig = {
-  repo: 'mothorror/giscus', // 仓库
-  repoId: 'R_kgDOSXHyQA', // 仓库 ID
-  category: 'Announcements', // 讨论分类
-  categoryId: 'DIC_kwDOSXHyQM4C8h3B', // 分类 ID
-  mapping: 'pathname', // 使用页面路径作为映射
-  strict: '0', // 非严格模式
-  reactionsEnabled: '0', // 禁用反应
-  emitMetadata: '0', // 不发出元数据
-  inputPosition: 'bottom', // 输入框在底部
-  theme: theme, // 主题
-  lang: lang, // 语言
-  loading: 'lazy', // 懒加载
-};
+const { path } = Astro.props;
+const commentConfig = loadConfig().comment;
+const giscus = commentConfig.giscus;
+const isEnabled = commentConfig?.enabled && !!giscus?.repo && !!giscus?.repoId;
 ---
 
-<div class="giscus-container">
-  <script is:inline src="https://giscus.app/client.js"
-    data-repo={giscusConfig.repo}
-    data-repo-id={giscusConfig.repoId}
-    data-category={giscusConfig.category}
-    data-category-id={giscusConfig.categoryId}
-    data-mapping={giscusConfig.mapping}
-    data-strict={giscusConfig.strict}
-    data-reactions-enabled={giscusConfig.reactionsEnabled}
-    data-emit-metadata={giscusConfig.emitMetadata}
-    data-input-position={giscusConfig.inputPosition}
-    data-theme={giscusConfig.theme}
-    data-lang={giscusConfig.lang}
-    data-loading={giscusConfig.loading}
-    crossorigin="anonymous"
-    async>
-  </script>
-</div>
+{isEnabled ? (
+  <div class="giscus-container" data-path={path || ''}></div>
+) : (
+  <p style="text-align:center; color:#999; padding:20px 0;">
+    评论系统未配置，请在 <code>site-config.yaml</code> 中设置 <code>comment.giscus</code>。
+  </p>
+)}
+
+<script is:inline define:vars={{ giscus, currentPath: path || Astro.url.pathname }}>
+  (function () {
+    if (!giscus || !giscus.repo || !giscus.repoId) return;
+
+    const container = document.querySelector('.giscus-container');
+    if (!container) return;
+
+    // 设置 giscus theme based on html.dark class (auto switch)
+    function getTheme() {
+      return document.documentElement.classList.contains('dark')
+        ? giscus.darkTheme || 'dark_tritanopia'
+        : giscus.theme || 'light_tritanopia';
+    }
+
+    function mountGiscus(theme) {
+      // 清掉旧的（主题切换时重建 iframe）
+      container.innerHTML = '';
+
+      const script = document.createElement('script');
+      script.src = 'https://giscus.app/client.js';
+      script.setAttribute('data-repo', giscus.repo);
+      script.setAttribute('data-repo-id', giscus.repoId);
+      script.setAttribute('data-category', giscus.category || 'Announcements');
+      script.setAttribute('data-category-id', giscus.categoryId || '');
+      script.setAttribute('data-mapping', 'pathname');
+      script.setAttribute('data-strict', '0');
+      script.setAttribute('data-reactions-enabled', giscus.reactionsEnabled ? '1' : '0');
+      script.setAttribute('data-emit-metadata', '0');
+      script.setAttribute('data-input-position', giscus.inputPosition || 'bottom');
+      script.setAttribute('data-theme', theme);
+      script.setAttribute('data-lang', giscus.lang || 'zh-CN');
+      script.setAttribute('data-loading', 'lazy');
+      script.crossOrigin = 'anonymous';
+      script.async = true;
+      container.appendChild(script);
+    }
+
+    // 懒加载：评论区进入视口时才挂载
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver(
+        function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+              mountGiscus(getTheme());
+              observer.disconnect();
+            }
+          });
+        },
+        { rootMargin: '300px' }
+      );
+      observer.observe(container);
+    } else {
+      mountGiscus(getTheme());
+    }
+
+    // 暗色模式切换时同步 Giscus 主题
+    window.__updateGiscusTheme = function () {
+      const iframe = container.querySelector('iframe.giscus-frame');
+      if (!iframe) return;
+      iframe.contentWindow.postMessage(
+        { giscus: { setConfig: { theme: getTheme() } } },
+        'https://giscus.app'
+      );
+    };
+
+    // 监听 dark class 变化
+    const observer = new MutationObserver(function () {
+      window.__updateGiscusTheme();
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+  })();
+</script>
 
 <style>
   .giscus-container {
-    /* 移除 padding，由父容器 .comment-block 控制 */
+    /* 容器约束交给父级 .comment-block */
   }
 
-  /* 隐藏 Giscus 顶部标识 */
-  :global(.giscus-frame a[href*="giscus.app"]) {
-    display: none !important;
-  }
-
-  /* 隐藏 Giscus 底部页脚和表情图案 */
-  :global(.giscus-frame footer),
-  :global(.giscus-frame .giscus-footer),
-  :global(.giscus-frame .giscus-footer *) {
-    display: none !important;
-  }
-
-  /* 隐藏点赞/反应功能 */
-  :global(.giscus-frame .reaction-reactions),
-  :global(.giscus-frame .reactions-container),
-  :global(.giscus-frame .giscus-reactions) {
-    display: none !important;
-  }
-
-  /* 隐藏表情选择器 */
-  :global(.giscus-frame .giscus-emoji),
-  :global(.giscus-frame .emoji-picker),
-  :global(.giscus-frame .toolbar-item-emoji) {
-    display: none !important;
-  }
-
-  /* Giscus 主题自定义 */
   :global(.giscus-frame) {
+    margin: 0 !important;
+    padding: 0 !important;
     border-radius: 8px;
+  }
+
+  :global(.giscus-container iframe) {
+    border: none;
   }
 </style>

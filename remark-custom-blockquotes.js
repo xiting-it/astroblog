@@ -1,87 +1,66 @@
 import { visit } from 'unist-util-visit';
 
 /**
- * Custom remark plugin to convert :::container syntax to blockquotes with classes
- * Syntax:
- * :::note
- * content
- * :::
+ * Starlight 风格的 Aside 容器
  *
- * Supported types: note, warning, danger, info, primary, success, flat
+ * 语法（Markdown directive）：
+ *   :::note
+ *   内容
+ *   :::
+ *
+ * 支持的 4 种类型（对齐 Astro Starlight）：
+ *   - note     → Note      (蓝色)
+ *   - tip      → Tip       (绿色)
+ *   - caution  → Caution   (橙色)
+ *   - danger   → Danger    (红色)
+ *
+ * 渲染成 <aside class="aside aside-xxx"> + 图标 + 标题 + 内容
  */
+
+// 类型配置：key = directive 名称
+const ASIDE_TYPES = {
+  note: {
+    title: 'Note',
+    icon: 'fa-solid fa-circle-info',
+  },
+  tip: {
+    title: 'Tip',
+    icon: 'fa-solid fa-lightbulb',
+  },
+  caution: {
+    title: 'Caution',
+    icon: 'fa-solid fa-triangle-exclamation',
+  },
+  danger: {
+    title: 'Danger',
+    icon: 'fa-solid fa-circle-exclamation',
+  },
+};
+
 export function customBlockquotes() {
   return (tree) => {
     visit(tree, (node) => {
-      // Check if node is a container directive
       if (
         node.type === 'containerDirective' ||
         node.type === 'leafDirective' ||
         node.type === 'textDirective'
       ) {
+        const config = ASIDE_TYPES[node.name];
+        if (!config) return; // 不是 aside 类型，跳过
+
         const data = node.data || (node.data = {});
 
-        // Convert to blockquote with class
-        data.hName = 'blockquote';
+        // 把 directive 转成 <aside>
+        data.hName = 'aside';
         data.hProperties = {
-          className: [node.name]
+          className: ['aside', `aside-${node.name}`],
+          // aria-label 给屏幕阅读器用，提升无障碍
+          ariaLabel: config.title,
+          // 把 type / title / icon 存到 data 属性，方便 CSS 或 JS 读取
+          dataAsideType: node.name,
+          dataAsideTitle: config.title,
+          dataAsideIcon: config.icon,
         };
-      }
-    });
-  };
-}
-
-/**
- * Custom remark plugin to convert inline label syntax to spans with classes
- * Syntax: [!labelblue]@content@, [!labelgrey]@content@, etc.
- * Supported colors: blue, grey, pink, yellow, green, orange
- */
-export function customInlineLabels() {
-  return (tree) => {
-    visit(tree, 'text', (node, index, parent) => {
-      if (!node.value || typeof index !== 'number') return;
-
-      const parts = [];
-      let lastIndex = 0;
-      const regex = /\[!(labelblue|labelgrey|labelpink|labelyellow|labelgreen|labelorange)\]@([^@]+)@/g;
-      let match;
-
-      while ((match = regex.exec(node.value)) !== null) {
-        // Add text before the label
-        if (match.index > lastIndex) {
-          parts.push({
-            type: 'text',
-            value: node.value.slice(lastIndex, match.index)
-          });
-        }
-
-        // Add the label as a span with class (using hName/hProperties for remark)
-        const labelNode = {
-          type: 'text',
-          value: match[2],
-          data: {
-            hName: 'span',
-            hProperties: {
-              className: [match[1]]
-            }
-          }
-        };
-        parts.push(labelNode);
-
-        lastIndex = match.index + match[0].length;
-      }
-
-      // Add remaining text
-      if (lastIndex < node.value.length) {
-        parts.push({
-          type: 'text',
-          value: node.value.slice(lastIndex)
-        });
-      }
-
-      // Replace the original node with the new parts
-      if (parts.length > 0) {
-        parent.children.splice(index, 1, ...parts);
-        return index + parts.length;
       }
     });
   };

@@ -31,96 +31,8 @@ const bgConfig = config.background;
 
     <!-- CSS -->
     <link rel="stylesheet" href="/css/next.css" />
-    <link href="//fonts.googleapis.com/css?family=Noto+Serif+SC:300,300italic,400,400italic,700,700italic|Roboto+Mono:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet" />
 
-    <!-- Scripts -->
-    <script is:inline src="//fastly.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
-    <link href="/lib/pace/pace-theme-clock.min.css?v=1.0.0" rel="stylesheet" />
-
-    <!-- 自定义时钟加载动画初始化 -->
-    <script is:inline>
-      // 自定义Pace.js的HTML结构
-      paceOptions = {
-        elements: false,
-        restartOnRequestAfter: false
-      };
-
-      // 创建炫酷时钟HTML结构
-      function createClockLoader() {
-        const paceActivity = document.querySelector('.pace-activity');
-        if (!paceActivity) return;
-
-        // 清空现有内容
-        paceActivity.innerHTML = '';
-
-        // 创建主时钟容器
-        const clock = document.createElement('div');
-        clock.className = 'pace-clock';
-
-        // 创建鎏金色内圈
-        const innerRing = document.createElement('div');
-        innerRing.className = 'pace-clock-inner-ring';
-        clock.appendChild(innerRing);
-
-        // 创建星空色表盘
-        const clockFace = document.createElement('div');
-        clockFace.className = 'pace-clock-face';
-
-        // 创建12个刻度
-        for (let i = 0; i < 12; i++) {
-          const mark = document.createElement('div');
-          mark.className = 'pace-clock-mark';
-          clockFace.appendChild(mark);
-        }
-
-        clock.appendChild(clockFace);
-
-        // 创建中心点
-        const center = document.createElement('div');
-        center.className = 'pace-clock-center';
-        clock.appendChild(center);
-
-        // 创建纺锤状分针
-        const hand = document.createElement('div');
-        hand.className = 'pace-clock-hand';
-        clock.appendChild(hand);
-
-        paceActivity.appendChild(clock);
-      }
-
-      // 监听Pace.js事件
-      document.addEventListener('DOMContentLoaded', function() {
-        createClockLoader();
-
-        // 当Pace激活时重新创建时钟
-        if (window.Pace) {
-          Pace.on('start', function() {
-            const paceActivity = document.querySelector('.pace-activity');
-            if (paceActivity) {
-              paceActivity.classList.remove('pace-clock-loaded');
-              if (!paceActivity.querySelector('.pace-clock')) {
-                setTimeout(createClockLoader, 50);
-              }
-            }
-          });
-
-          // 当Pace完成时，停留1.8秒后添加飞出动画类
-          Pace.on('done', function() {
-            const paceActivity = document.querySelector('.pace-activity');
-            if (paceActivity) {
-              // 停留1.8秒后开始飞出动画
-              setTimeout(function() {
-                paceActivity.classList.add('pace-clock-loaded');
-              }, 1800);
-            }
-          });
-
-          // 确保页面加载时创建时钟
-          setTimeout(createClockLoader, 100);
-        }
-      });
-    </script>
   </head>
 
   <body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
@@ -199,9 +111,63 @@ const bgConfig = config.background;
       </div>
     </div>
 
-    <!-- Code highlighting - Xcode Light style (atom-one-light) -->
+    <!-- Code highlighting - Xcode Light (atom-one-light) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/atom-one-light.min.css" />
-    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+    <script is:inline src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+
+    <!-- 代码块复制按钮 -->
+    <script is:inline>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Apply highlight.js
+        if (typeof hljs !== 'undefined') {
+          document.querySelectorAll('pre code').forEach((block) => {
+            hljs.highlightElement(block);
+          });
+        }
+
+        // 给每个 pre 添加复制按钮
+        document.querySelectorAll('pre').forEach((pre) => {
+          // 跳过已添加的
+          if (pre.querySelector('.copy-button')) return;
+
+          const button = document.createElement('button');
+          button.className = 'copy-button';
+          button.textContent = '复制';
+          button.setAttribute('aria-label', '复制代码');
+
+          button.addEventListener('click', function() {
+            const code = pre.querySelector('code');
+            if (!code) return;
+            const text = code.textContent;
+
+            navigator.clipboard.writeText(text).then(() => {
+              button.textContent = '已复制';
+              button.classList.add('copied');
+              setTimeout(() => {
+                button.textContent = '复制';
+                button.classList.remove('copied');
+              }, 2000);
+            }).catch(() => {
+              // fallback
+              const textarea = document.createElement('textarea');
+              textarea.value = text;
+              document.body.appendChild(textarea);
+              textarea.select();
+              document.execCommand('copy');
+              document.body.removeChild(textarea);
+              button.textContent = '已复制';
+              button.classList.add('copied');
+              setTimeout(() => {
+                button.textContent = '复制';
+                button.classList.remove('copied');
+              }, 2000);
+            });
+          });
+
+          pre.appendChild(button);
+        });
+      });
+    </script>
   </body>
 </html>
 
@@ -338,138 +304,77 @@ const bgConfig = config.background;
     font-size: 12px;
   }
 
-  /* Code styling - reset first */
+  /* ===== 代码字体（系统等宽字体）===== */
   code {
-    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-family: var(--font-mono);
   }
 
-  /* Code blocks - use atom-one-light theme colors */
-  pre {
-    background: #fafafa !important;
-    border: 1px solid #e1e1e1;
-    border-radius: 4px;
-    padding: 15px;
-    overflow-x: auto;
-    display: block !important;
-  }
-
-  pre code {
-    color: #383a42 !important;
-    background: transparent !important;
-    padding: 0 !important;
-    font-size: 14px;
-    line-height: 1.5;
-    display: block !important;
-  }
-
-  /* Inline code - purple-red color (#c7254e) */
-  /* Use more specific selectors to avoid matching HTML tags */
+  /* ===== 行内代码（Starlight 风格）===== */
   p code, li code, td code, th code,
   .post-body code, .post-excerpt code,
   h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {
-    color: #c7254e !important;
-    background: #f9f2f4;
+    color: var(--text-primary) !important;
+    background: var(--bg-inline-code);
     padding: 2px 6px;
-    border-radius: 3px;
-    font-size: 0.9em;
+    border-radius: var(--radius-sm);
+    font-size: 0.875em;
+    font-family: var(--font-mono);
   }
 
-  /* CRITICAL: Override for code blocks - must come after inline code rules */
+  /* ===== 代码块（Xcode Light / atom-one-light 风格）===== */
+  pre {
+    background: #fafafa !important;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md) !important;
+    padding: 16px 20px !important;
+    overflow-x: auto;
+    display: block !important;
+    margin: 20px 0;
+    position: relative;
+  }
+
   pre code {
-    color: #383a42 !important;
     background: transparent !important;
     padding: 0 !important;
+    font-size: 14px;
+    line-height: 1.6;
     display: block !important;
+    font-family: var(--font-mono);
+  }
+  /* 不用 !important 设置 color，让 atom-one-light 主题的 token 颜色生效 */
+  pre code:not(.hljs) {
+    color: #383a42;
   }
 
-  /* 时钟加载动画阴影 */
-  .pace-clock {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  /* 复制按钮（右上角，适配浅色背景） */
+  pre .copy-button {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 4px 10px;
+    background: #fff;
+    color: var(--text-muted);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s, background 0.2s;
   }
 
-  .pace-clock-inner-ring,
-  .pace-clock-face,
-  .pace-clock-center,
-  .pace-clock-hand {
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  pre:hover .copy-button {
+    opacity: 1;
   }
 
-  /* 容器区块样式 - 统一格式 */
-  blockquote.info,
-  blockquote.note,
-  blockquote.warning,
-  blockquote.danger,
-  blockquote.tip,
-  blockquote.success,
-  blockquote.primary,
-  blockquote.flat {
-    margin: 32px 0;
-    padding: 12px 16px;
-    border-left: 8px solid;
-    border-radius: 0;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  pre .copy-button:hover {
+    background: var(--color-gray-6);
+    color: var(--text-primary);
   }
 
-  blockquote.info {
-    border-left-color: #5bc0de;
-    background: #e3f2fd;
-  }
-
-  blockquote.note {
-    border-left-color: #6c757d;
-    background: #f8f9fa;
-  }
-
-  blockquote.warning {
-    border-left-color: #ff9800;
-    background: #fff3e0;
-  }
-
-  blockquote.danger {
-    border-left-color: #dc3545;
-    background: #ffebee;
-  }
-
-  blockquote.tip {
-    border-left-color: #4caf50;
-    background: #e8f5e9;
-  }
-
-  blockquote.success {
-    border-left-color: #28a745;
-    background: #d4edda;
-  }
-
-  blockquote.primary {
-    border-left-color: #34495e;
-    background: #eaedf0;
-  }
-
-  blockquote.flat {
-    border-left-color: #95a5a6;
-    background: #f5f5f5;
-  }
-
-  /* 容器区块内的元素样式 */
-  blockquote.info p,
-  blockquote.note p,
-  blockquote.warning p,
-  blockquote.danger p,
-  blockquote.tip p,
-  blockquote.success p,
-  blockquote.primary p,
-  blockquote.flat p {
-    margin: 0;
-  }
-
-  blockquote.info strong,
-  blockquote.note strong,
-  blockquote.warning strong,
-  blockquote.danger strong,
-  blockquote.tip strong,
-  blockquote.success strong,
-  blockquote.primary strong {
-    color: inherit;
+  pre .copy-button.copied {
+    color: var(--color-success);
+    border-color: var(--color-success);
   }
 
   /* 点击水波纹效果 */
@@ -571,13 +476,6 @@ const bgConfig = config.background;
             behavior: 'smooth'
           });
         });
-
-        // Apply highlight.js to code blocks
-        if (typeof hljs !== 'undefined') {
-          document.querySelectorAll('pre code').forEach((block) => {
-            hljs.highlightElement(block);
-          });
-        }
 
         // 确保背景视频自动播放
         const backgroundVideo = document.getElementById('background-video');

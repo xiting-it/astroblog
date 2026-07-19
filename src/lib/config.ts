@@ -53,6 +53,21 @@ export interface SiteConfig {
     enabled: boolean;
     placeholder: string;
   };
+  comment: {
+    enabled: boolean;
+    giscus: {
+      repo: string;
+      repoId: string;
+      category: string;
+      categoryId: string;
+      mapping: 'pathname' | 'url' | 'title' | 'og:title';
+      reactionsEnabled: boolean;
+      inputPosition: 'top' | 'bottom';
+      lang: string;
+      theme: string;
+      darkTheme: string;
+    };
+  };
   features: {
     back_to_top: boolean;
     pace_loading: boolean;

@@ -190,7 +190,7 @@ const wordCount = rawContent.length;
   <!-- Giscus 评论系统 -->
   <div class="posts-expand comment-section">
     <div class="comment-block">
-      <Giscus lang="zh-CN" theme="light" />
+      <Giscus path={`/blog/${post.id.replace('.md', '')}/`} />
     </div>
   </div>
 </NextLayout>
@@ -431,166 +431,111 @@ const wordCount = rawContent.length;
     background-color: #fff;
   }
 
-  /* Inline code styles */
-  .post-body :global(code:not(.hljs):not(.highlight-chroma)) {
-    padding: 0.2em 0.4em;
-    margin: 0;
-    font-size: 85%;
-    border-radius: 3px;
-    word-break: break-word;
-    background-size: 20px 20px;
-    white-space: pre-wrap;
-    background-color: rgba(27, 31, 35, 0.05);
-  }
+  /* 行内代码样式（由 NextLayout 统一控制，这里不重复定义） */
 
-  /* Code block styles */
+  /* 代码块样式（由 NextLayout 统一控制，这里只保留间距） */
   .post-body :global(pre) {
-    margin: 1em 0;
-  }
-  .post-body :global(pre > code) {
-    margin: 0;
-    font-size: 85%;
-    padding: 0.5em;
-    border-radius: 5px;
-    display: block;
-    overflow: auto;
-    white-space: pre;
-    background-size: 20px 20px;
-    word-break: initial;
-    word-wrap: normal;
-    background-color: #f6f8fa;
+    margin: 1.5em 0;
   }
 
-  /* Custom blockquote styles - note, info, warning, danger, tip, success, primary, flat */
-  .post-body :global(blockquote.note),
-  .post-body :global(blockquote.info),
-  .post-body :global(blockquote.warning),
-  .post-body :global(blockquote.danger),
-  .post-body :global(blockquote.tip),
-  .post-body :global(blockquote.success),
-  .post-body :global(blockquote.primary),
-  .post-body :global(blockquote.flat) {
-    margin: 32px 0 !important;
-    padding: 12px 16px;
-    border-left: 8px solid;
-    border-radius: 0;
-    line-height: 1.6;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  /* =========================================
+   * Starlight 风格 Aside 容器
+     *
+     * HTML 结构由 remark-custom-blockquotes.js 生成：
+     *   <aside class="aside aside-note" data-aside-title="Note" data-aside-icon="...">
+     *     <!-- 原始 Markdown 渲染后的内容 -->
+     *   </aside>
+     *
+     * 标题和图标通过 CSS ::before 伪元素生成，保持 HTML 简洁。
+     * ========================================= */
+  .post-body :global(.aside) {
+    margin: 28px 0 !important;
+    padding: 0 !important;
+    border: 1px solid var(--aside-border, #e5e7eb);
+    border-left: 4px solid var(--aside-accent, #6b7280);
+    border-radius: 8px;
+    background: var(--aside-bg, #f9fafb);
+    overflow: hidden;
+    font-style: normal !important; /* 覆盖默认 blockquote 斜体 */
   }
 
-  .post-body :global(blockquote.note) {
-    border-left-color: #6c757d;
-    background: #f8f9fa;
+  /* 头部栏：图标 + 标题（通过 ::before 插入） */
+  .post-body :global(.aside)::before {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: var(--aside-accent-bg, transparent);
+    color: var(--aside-accent, #6b7280);
+    font-weight: 700;
+    font-size: 0.95em;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    border-bottom: 1px solid var(--aside-border, #e5e7eb);
   }
 
-  .post-body :global(blockquote.info) {
-    border-left-color: #5bc0de;
-    background: #e3f2fd;
+  /* 内容区 */
+  .post-body :global(.aside) > :global(*) {
+    margin: 16px 16px !important;
   }
 
-  .post-body :global(blockquote.warning) {
-    border-left-color: #ff9800;
-    background: #fff3e0;
+  .post-body :global(.aside) > :global(*:first-child) {
+    margin-top: 16px !important;
   }
 
-  .post-body :global(blockquote.danger) {
-    border-left-color: #dc3545;
-    background: #ffebee;
+  .post-body :global(.aside) > :global(*:last-child) {
+    margin-bottom: 16px !important;
   }
 
-  .post-body :global(blockquote.tip) {
-    border-left-color: #4caf50;
-    background: #e8f5e9;
+  /* --- note（蓝灰，信息） --- */
+  .post-body :global(.aside-note) {
+    --aside-accent: #2563eb;
+    --aside-accent-bg: #eff6ff;
+    --aside-bg: #f8fafc;
+    --aside-border: #dbeafe;
+  }
+  .post-body :global(.aside-note)::before {
+    content: "\f05a" "\00a0" "Note";  /* fa-info-circle + 空格 + 标题 */
+    font-family: 'Font Awesome 6 Free', sans-serif;
+    font-weight: 900;
   }
 
-  .post-body :global(blockquote.success) {
-    border-left-color: #28a745;
-    background: #d4edda;
+  /* --- tip（绿色，技巧） --- */
+  .post-body :global(.aside-tip) {
+    --aside-accent: #16a34a;
+    --aside-accent-bg: #f0fdf4;
+    --aside-bg: #f8fdf9;
+    --aside-border: #dcfce7;
+  }
+  .post-body :global(.aside-tip)::before {
+    content: "\f0eb" "\00a0" "Tip";  /* fa-lightbulb */
+    font-family: 'Font Awesome 6 Free', sans-serif;
+    font-weight: 900;
   }
 
-  .post-body :global(blockquote.primary) {
-    border-left-color: #34495e;
-    background: #eaedf0;
+  /* --- caution（橙色，注意） --- */
+  .post-body :global(.aside-caution) {
+    --aside-accent: #d97706;
+    --aside-accent-bg: #fffbeb;
+    --aside-bg: #fffdf5;
+    --aside-border: #fef3c7;
+  }
+  .post-body :global(.aside-caution)::before {
+    content: "\f071" "\00a0" "Caution";  /* fa-triangle-exclamation */
+    font-family: 'Font Awesome 6 Free', sans-serif;
+    font-weight: 900;
   }
 
-  .post-body :global(blockquote.flat) {
-    border-left-color: #95a5a6;
-    background: #f5f5f5;
+  /* --- danger（红色，危险） --- */
+  .post-body :global(.aside-danger) {
+    --aside-accent: #dc2626;
+    --aside-accent-bg: #fef2f2;
+    --aside-bg: #fffafa;
+    --aside-border: #fee2e2;
   }
-
-  /* Fix note/info/warning/danger/tip/success/primary/flat 内部元素的间距 */
-  .post-body :global(blockquote.note > *:first-child),
-  .post-body :global(blockquote.info > *:first-child),
-  .post-body :global(blockquote.warning > *:first-child),
-  .post-body :global(blockquote.danger > *:first-child),
-  .post-body :global(blockquote.tip > *:first-child),
-  .post-body :global(blockquote.success > *:first-child),
-  .post-body :global(blockquote.primary > *:first-child),
-  .post-body :global(blockquote.flat > *:first-child) {
-    margin-top: 0 !important;
-  }
-
-  .post-body :global(blockquote.note > *:last-child),
-  .post-body :global(blockquote.info > *:last-child),
-  .post-body :global(blockquote.warning > *:last-child),
-  .post-body :global(blockquote.danger > *:last-child),
-  .post-body :global(blockquote.tip > *:last-child),
-  .post-body :global(blockquote.success > *:last-child),
-  .post-body :global(blockquote.primary > *:last-child),
-  .post-body :global(blockquote.flat > *:last-child) {
-    margin-bottom: 0 !important;
-  }
-
-  /* Custom label tag styles */
-  .post-body :global(span.labelgreen),
-  .post-body :global(span.labelred),
-  .post-body :global(span.labelblue),
-  .post-body :global(span.labelyellow),
-  .post-body :global(span.labelgrey),
-  .post-body :global(span.labelpink),
-  .post-body :global(span.labelorange) {
-    display: inline !important;
-    padding: 1px 4px !important;
-    border-radius: 3px !important;
-    font-size: 0.9em !important;
-    margin: 0 1px !important;
-    line-height: 1.4 !important;
-    vertical-align: middle !important;
-  }
-
-  .post-body :global(span.labelgreen) {
-    background: #e8f5e9 !important;
-    color: #333 !important;
-  }
-
-  .post-body :global(span.labelred) {
-    background: #ffebee !important;
-    color: #333 !important;
-  }
-
-  .post-body :global(span.labelblue) {
-    background: #e3f2fd !important;
-    color: #333 !important;
-  }
-
-  .post-body :global(span.labelyellow) {
-    background: #fffde7 !important;
-    color: #333 !important;
-  }
-
-  .post-body :global(span.labelgrey) {
-    background: #f5f5f5 !important;
-    color: #333 !important;
-  }
-
-  .post-body :global(span.labelpink) {
-    background: #fce4ec !important;
-    color: #333 !important;
-  }
-
-  .post-body :global(span.labelorange) {
-    background: #fff3e0 !important;
-    color: #333 !important;
+  .post-body :global(.aside-danger)::before {
+    content: "\f06a" "\00a0" "Danger";  /* fa-circle-exclamation */
+    font-family: 'Font Awesome 6 Free', sans-serif;
+    font-weight: 900;
   }
 
   /* Post Tags Styles */
@@ -691,6 +636,7 @@ const wordCount = rawContent.length;
     margin: 0 !important;
   }
 
+  /* Giscus 容器调整 */
   :global(.giscus-frame) {
     margin: 0 !important;
     padding: 0 !important;

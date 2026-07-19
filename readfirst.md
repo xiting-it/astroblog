@@ -2,259 +2,214 @@
 
 ## 一、整体技术栈
 
-**框架**: Astro 6.3.1 + MDX 支持
-**主题**: BlackWhite（基于 NexT Muse 风格）
-**部署**: Cloudflare Pages（静态站点）
-**语言**: TypeScript
-
----
+- **框架**：Astro 6.3 + MDX
+- **主题**：Starlight 风格（基于 NexT Muse 演化）
+- **部署**：Cloudflare Pages（静态站点）
+- **语言**：TypeScript
 
 ## 二、目录结构
 
 ```
 astroblog/
 ├── src/
-│   ├── components/          # 组件库
-│   │   ├── Giscus.astro    # 评论系统
-│   │   ├── Header.astro    # 简单头部
-│   │   ├── NextHeader.astro # NexT风格头部
-│   │   ├── NextFooter.astro # 页脚
-│   │   ├── NextSidebar.astro # 侧边栏
-│   │   └── PostCardNext.astro # 文章卡片
-│   ├── layouts/            # 布局模板
-│   │   ├── BaseLayout.astro # 基础布局（暗色模式）
-│   │   ├── NextLayout.astro # 主布局（NexT风格）
-│   │   ├── PostLayout.astro # 文章布局
-│   │   └── AdminLayout.astro # 管理后台布局
-│   ├── pages/              # 路由页面
-│   │   ├── index.astro     # 首页（分页）
-│   │   ├── blog/[...slug].astro # 文章详情
-│   │   ├── tags/[tag].astro # 标签页
-│   │   ├── categories/[category].astro # 分类页
-│   │   ├── page/[page].astro # 分页
-│   │   ├── archive.astro   # 归档页
-│   │   ├── search.astro    # 搜索页
-│   │   └── about.astro     # 关于页
-│   ├── content/            # 内容集合
-│   │   ├── blog/*.md       # 主要文章
-│   │   ├── posts/*.md      # 兼容旧文章
-│   │   └── resources/*.md  # 资源下载
-│   ├── lib/                # 工具库
-│   │   ├── config.ts       # 配置加载器
-│   │   ├── search-index.ts # 搜索索引
-│   │   └── utils.ts        # 通用工具函数
-│   ├── types/              # TypeScript类型定义
-│   └── styles/             # 全局样式
-├── public/                 # 静态资源
-│   ├── css/                # 样式文件
-│   ├── js/                 # JavaScript文件
-│   ├── images/             # 图片
-│   └── lib/                # 第三方库
-├── site-config.yaml        # 全局配置（单一配置源）
-├── astro.config.mjs        # Astro配置
-├── content.config.ts       # 内容集合定义
-├── remark-custom-blockquotes.js  # 容器区块插件
-└── remark-custom-label-tags.js   # 标签颜色插件
+│   ├── components/              # 组件库
+│   │   ├── Giscus.astro         # 评论系统（配置走 yaml）
+│   │   ├── NextHeader.astro     # 头部 + 导航
+│   │   ├── NextFooter.astro     # 页脚（备案信息）
+│   │   └── PostCardNext.astro   # 文章列表卡片
+│   ├── layouts/
+│   │   └── NextLayout.astro     # 主布局（背景/头部/页脚/返回顶部/代码高亮）
+│   ├── pages/
+│   │   ├── index.astro          # 首页（分页第 1 页）
+│   │   ├── page/[page].astro    # 分页第 2 页起
+│   │   ├── blog/[...slug].astro # 文章详情（含上下篇导航 + 评论）
+│   │   ├── tags.astro + tags/[tag].astro
+│   │   ├── categories.astro + categories/[category].astro
+│   │   ├── archive.astro        # 归档
+│   │   ├── search.astro         # 搜索
+│   │   ├── about.astro          # 关于
+│   │   └── 404.astro
+│   ├── content/
+│   │   └── blog/**/*.md         # 文章 Markdown 源
+│   ├── lib/
+│   │   ├── config.ts            # 加载 site-config.yaml
+│   │   └── search-index.ts      # 构建期生成搜索索引
+│   ├── content.config.ts        # 内容集合 schema 定义
+│   └── env.d.ts
+├── public/
+│   ├── css/next.css             # 主样式（Starlight 风格 CSS 变量）
+│   └── images/                  # 图标、头像等
+├── site-config.yaml             # 全局配置（单一配置源）
+├── astro.config.mjs
+├── remark-custom-blockquotes.js # Markdown 扩展（Aside 容器）
+├── wrangler.toml                # Cloudflare 部署配置
+├── CLAUDE.md / readfirst.md     # 项目文档
+└── package.json
 ```
 
----
+## 三、配置文件
 
-## 三、配置文件详解
+### `site-config.yaml`（单一配置源）
 
-### 1. `site-config.yaml`（全局配置）
+通过 `src/lib/config.ts` 的 `loadConfig()` 加载。加载失败会直接抛错（fail fast）。
 
-这是项目的**单一配置源**，通过 `src/lib/config.ts` 加载。
+主要字段：
 
 ```yaml
-# 站点信息
-site:
-  title: "Xiting's Blog"
-  description: '网站描述'
-  keywords: '关键词1,关键词2'
-  author: 'Xiting'
+site:          # 标题、描述、关键词、作者
+background:    # 背景模式（png / mp4 / player）
+header:        # 头部标题副标题
+navigation:    # 导航菜单（NextHeader 读取此字段渲染）
+footer:        # 页脚（当前代码未读取，NextFooter 硬编码）
+search:        # 搜索开关
+features:      # 功能开关（当前代码未读取，保留扩展位）
 
-# 背景设置（支持三种模式）
-background:
-  mode: 'mp4'  # 可选: png | mp4 | player
-
-  # PNG静态图片背景
-  png:
-    url: '图片URL'
-    opacity: 0.85
-    size: 'cover'
-    position: 'center'
-    attachment: 'fixed'
-
-  # MP4动态视频背景
-  mp4:
-    url: '视频URL'
-    opacity: 0.85
-    autoplay: true
-    loop: true
-    muted: true
-
-  # 视频播放器背景（第三方）
-  player:
-    enabled: false
-    container_id: ''
-    user_id: 0
-    vcode: ''
-    auto_play: true
-
-# 头部设置
-header:
-  title: "Xiting's Blog"
-  subtitle: 'Stay Hungry, Stay Foolish'
-
-# 导航菜单
-navigation:
-  - name: '首页'
-    url: '/'
-  - name: '归档'
-    url: '/archive'
-
-# 页脚
-footer:
-  copyright: '© 2024 Xiting. All rights reserved.'
-  powered_by: 'Astro'
-
-# 搜索功能
-search:
+# Giscus 评论系统
+comment:
   enabled: true
-  placeholder: '搜索文章...'
-
-# 功能开关
-features:
-  back_to_top: true        # 返回顶部
-  pace_loading: true       # 加载动画
-  code_highlight: true     # 代码高亮
-  lazy_load_images: false  # 图片懒加载
+  giscus:
+    repo: 'xiting-it/commentgiscus'
+    repoId: 'R_kgDOTdc47g'
+    category: 'Announcements'
+    categoryId: 'DIC_kwDOTdc47s4DBiTv'
+    mapping: 'pathname'
+    reactionsEnabled: true
+    inputPosition: 'bottom'
+    lang: 'zh-CN'
+    theme: 'light_tritanopia'        # 亮色主题
+    darkTheme: 'dark_tritanopia'     # 暗色主题
 ```
 
----
+### `astro.config.mjs`
 
-### 2. `astro.config.mjs`（Astro配置）
+关键配置：
+- `output: 'static'` + `build.format: 'directory'`（目录式 URL）
+- `markdown.syntaxHighlight: false`（关闭构建期高亮，由客户端 highlight.js 处理）
+- `markdown.gfm: true` + `smartypants: true`
+- remark 插件：`remarkDirective` + `customBlockquotes`
+- 启用 `experimental.clientPrerender`
 
-```javascript
-{
-  integrations: [mdx()],              // MDX支持
-  output: 'static',                    // 静态输出
-  site: 'https://blog.xiting3.xyz',   // 站点URL
-  build: {
-    format: 'directory'               // 目录格式输出（URL更清晰）
-  },
-  markdown: {
-    remarkPlugins: [
-      remarkDirective,                // 容器指令支持
-      customBlockquotes,              // 自定义容器区块
-      customInlineLabels              // 自定义标签颜色
-    ],
-    syntaxHighlight: 'shiki',         // 语法高亮
-    gfm: true                         // GitHub风格Markdown
-  }
-}
-```
+### `content.config.ts`
 
----
+只有一个集合 `blog`：
 
-### 3. `content.config.ts`（内容集合配置）
-
-定义三个内容集合：
-
-**blog** - 主文章集合
 ```typescript
 schema: {
-  title: string,          // 必需
-  pubDate: Date,          // 必需
-  description: string,    // 必需
-  updatedDate?: Date,     // 可选
-  category?: string,
-  tags?: string[],
-  backgroundImage?: string,
-  draft?: boolean
+  title: string              // 必填
+  pubDate: Date              // 必填
+  description: string        // 必填
+  updatedDate?: Date
+  category?: string
+  tags?: string[]
+  backgroundImage?: string   // 文章头图
+  draft?: boolean            // 默认 false
 }
 ```
 
-**posts** - 兼容旧文章（相同字段）
-**resources** - 资源下载
-```typescript
-schema: {
-  name: string,
-  version?: string,
-  description: string,
-  downloadUrl: string,
-  publishDate: Date
-}
-```
+**文章 URL 规则**：`/blog/{相对路径去掉 .md}/`
+例：`src/content/blog/AI扫盲/aiabstract.md` → `/blog/AI扫盲/aiabstract/`
 
----
-
-## 四、布局层次
+## 四、布局
 
 ```
-BaseLayout (暗色模式、简单)
+NextLayout.astro（唯一主布局）
     ↓
-NextLayout (NexT风格、背景、动画)
-    ↓
-页面组件 (index.astro, blog/[...slug].astro 等)
+页面组件（index.astro / blog/[...slug].astro 等）
 ```
 
-**NextLayout** 是主布局，包含：
-- 背景图片/视频/播放器
-- 时钟加载动画
-- 返回顶部按钮
-- 动态标题效果
-- 水波纹点击效果
-- 代码高亮（highlight.js）
+**NextLayout** 提供：
+- 背景渲染（三种模式：PNG / MP4 / DogeCloud 播放器）
+- 返回顶部按钮（滚动百分比）
+- 动态标题（切换标签时显示提示语）
+- 点击水波纹效果
+- highlight.js 客户端代码高亮（atom-one-light 主题）
+- 代码块复制按钮（hover 显示）
+- Font Awesome 6.5.2（图标）
 
----
+## 五、字体和配色（Starlight 风格）
 
-## 五、Markdown扩展
+### 字体
 
-### 容器区块
+**系统字体栈**，零网络请求：
+- **正文**：`-apple-system` / `PingFang SC`（macOS）/ `Microsoft YaHei`（Windows）
+- **代码**：`ui-monospace` / `SF Mono`（macOS）/ `Consolas`（Windows）
+
+### 配色
+
+CSS 变量驱动，定义在 `public/css/next.css` 顶部：
+- **灰度阶梯**：`--color-gray-1`（最深）到 `--color-gray-7`（最浅）
+- **强调色**：`--color-accent`（Starlight 蓝 `hsl(234, 90%, 60%)`）
+- **语义色**：`--color-success`（绿）/ `--color-warning`（橙）/ `--color-danger`（红）
+- **背景**：`--bg-page`（页面）/ `--bg-card`（卡片）/ `--bg-inline-code`（行内代码）
+
+### 代码块
+
+- **主题**：atom-one-light（Xcode Light 风格）
+- **背景**：浅色 `#fafafa`
+- **圆角**：6px
+- **复制按钮**：hover 时右上角显示
+
+## 六、Markdown 扩展
+
+所有扩展集中在 `remark-custom-blockquotes.js` 一个文件里，采用 **Astro Starlight 风格** 的 Aside 容器。
+
+### Aside 容器（4 种）
+
 ```markdown
-:::info
-信息内容
+:::note
+备注内容
 :::
 
-:::warning
-警告内容
+:::tip
+小技巧
+:::
+
+:::caution
+注意内容
 :::
 
 :::danger
-危险内容
+警告内容
 :::
 ```
 
-支持的类型：note, warning, danger, info, primary, success, tip, flat
+| 语法 | 标题 | 图标 | 主色 |
+|------|------|------|------|
+| `:::note` | Note | ℹ️ | 蓝色 |
+| `:::tip` | Tip | 💡 | 绿色 |
+| `:::caution` | Caution | ⚠️ | 橙色 |
+| `:::danger` | Danger | 🚫 | 红色 |
 
-### 标签颜色
-```markdown
-[!labelblue]@蓝色标签@
-[!labelred]@红色标签@
-[!labelgreen]@绿色标签@
-[!labelyellow]@黄色标签@
-[!labelgrey]@灰色标签@
-[!labelpink]@粉色标签@
-[!labelorange]@橙色标签@
-```
+> 行内彩色标签 `[!labelblue]@内容@` 已移除，需要高亮请用**粗体**或行内代码。
 
----
+## 七、关键组件
 
-## 六、特殊功能
+| 组件 | 说明 |
+|------|------|
+| `NextHeader.astro` | 头部 + 导航菜单（从 yaml 读 `navigation`，图标按 URL 映射） |
+| `NextFooter.astro` | 页脚（社区备案、CDN、版权） |
+| `PostCardNext.astro` | 文章列表卡片（首页 + 分页页用） |
+| `Giscus.astro` | 评论组件（懒加载 + 跟随暗色模式自动切换主题） |
 
-1. **动态标题**: 切换标签页时显示"zzz睡觉了晚安"，返回时显示"打起精神来ing"
-2. **背景模式**: 支持PNG静态图、MP4动态视频、第三方播放器
-3. **时钟加载动画**: Pace.js + 自定义时钟样式
-4. **评论系统**: Giscus（基于GitHub Discussions）
-5. **分页**: 每页5篇文章（`POSTS_PER_PAGE = 5`）
+## 八、特殊功能
 
----
+1. **动态标题**：切换标签页时显示"zzz睡觉了晚安"，返回时显示"打起精神来ing"
+2. **背景模式**：支持 PNG 静态图 / MP4 动态视频 / DogeCloud 播放器三选一
+3. **评论系统**：Giscus（基于 GitHub Discussions，仓库 `xiting-it/commentgiscus`）
+4. **分页**：每页 5 篇文章（`POSTS_PER_PAGE = 5`）
+5. **本地搜索**：构建期生成 JSON 索引注入到 `/search` 页面，客户端模糊匹配
+6. **代码块复制**：hover 显示复制按钮，点击复制到剪贴板
 
-## 七、常用命令
+## 九、常用命令
 
 ```bash
 npm run dev      # 开发服务器 (localhost:4321)
-npm run build    # 构建（包含类型检查 astro check）
+npm run build    # 构建（含 astro check 类型检查）
 npm run preview  # 预览构建产物
 ```
+
+## 十、部署
+
+- 推送 `main` 分支到 GitHub → Cloudflare Pages 自动构建
+- 域名：`blog.xiting3.xyz` / `blog.xitingit.top`
+- 部署配置见 `wrangler.toml`

@@ -49,8 +49,24 @@ search:
   enabled: true
   placeholder: '搜索文章...'
 
+# Giscus 评论系统
+# 配置生成：https://giscus.app/zh-CN
+comment:
+  enabled: true
+  giscus:
+    repo: 'xiting-it/commentgiscus'
+    repoId: 'R_kgDOTdc47g'
+    category: 'Announcements'
+    categoryId: 'DIC_kwDOTdc47s4DBiTv'
+    mapping: 'pathname'
+    reactionsEnabled: true
+    inputPosition: 'bottom'
+    lang: 'zh-CN'
+    theme: 'light_tritanopia'           # 亮色主题
+    darkTheme: 'dark_tritanopia'        # 暗色主题
+
 features:
   back_to_top: true
-  pace_loading: true
+  pace_loading: false  # 已移除 Pace.js 加载动画
   code_highlight: true
   lazy_load_images: false
