@@ -33,6 +33,7 @@ Frontmatter 字段：
 
 通过 `astro.config.mjs` 注册的 remark 插件（都在 `remark-custom-blockquotes.js` 一个文件里）：
 - **Aside 容器**（Starlight 风格）：`:::note` / `:::tip` / `:::caution` / `:::danger`
+- 同时支持 Obsidian callout 语法：`> [!note]` / `> [!tip]` / `> [!caution]` / `> [!danger]`
 
 ### 布局层次
 

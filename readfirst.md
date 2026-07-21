@@ -153,32 +153,33 @@ CSS 变量驱动，定义在 `public/css/next.css` 顶部：
 
 所有扩展集中在 `remark-custom-blockquotes.js` 一个文件里，采用 **Astro Starlight 风格** 的 Aside 容器。
 
-### Aside 容器（4 种）
+### 两种语法（任选其一）
+
+**语法 A：directive（博客原生）**
 
 ```markdown
 :::note
 备注内容
 :::
-
-:::tip
-小技巧
-:::
-
-:::caution
-注意内容
-:::
-
-:::danger
-警告内容
-:::
 ```
+
+**语法 B：Obsidian callout（Obsidian 编辑器原生支持，推荐）**
+
+```markdown
+> [!note]
+> 备注内容
+```
+
+两种语法渲染效果完全一致，可以在 Obsidian 里用 callout 语法写作（所见即所得），发布到博客时无需转换。
+
+### Aside 容器（4 种）
 
 | 语法 | 标题 | 图标 | 主色 |
 |------|------|------|------|
-| `:::note` | Note | ℹ️ | 蓝色 |
-| `:::tip` | Tip | 💡 | 绿色 |
-| `:::caution` | Caution | ⚠️ | 橙色 |
-| `:::danger` | Danger | 🚫 | 红色 |
+| `:::note` 或 `> [!note]` | Note | ℹ️ | 蓝色 |
+| `:::tip` 或 `> [!tip]` | Tip | 💡 | 绿色 |
+| `:::caution` 或 `> [!caution]` | Caution | ⚠️ | 橙色 |
+| `:::danger` 或 `> [!danger]` | Danger | 🚫 | 红色 |
 
 > 行内彩色标签 `[!labelblue]@内容@` 已移除，需要高亮请用**粗体**或行内代码。
 
