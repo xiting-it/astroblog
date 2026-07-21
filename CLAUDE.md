@@ -21,11 +21,12 @@ Frontmatter 字段：
 ### 全局配置（`site-config.yaml`）
 
 单一配置源，通过 `src/lib/config.ts` 的 `loadConfig()` 在服务端加载。包含：
-- `site` — 站点标题、描述、关键词
+- `site` — 站点标题、描述、关键词、作者（供 SEO meta 标签和 PostCard 默认作者用）
 - `background` — 背景模式（`png` / `mp4` / `player`）
+- `header` — 头部标题和副标题（由 `NextHeader.astro` 读取渲染）
 - `navigation` — 导航菜单（由 `NextHeader.astro` 读取渲染）
 - `comment` — Giscus 评论配置（`repo` / `repoId` / `categoryId` 等）
-- `search` / `features` — 其他开关（当前代码未读取，保留扩展位）
+- `search` — 搜索开关（当前代码未读，预留）
 
 加载失败会直接抛错（fail fast，不静默 fallback）。
 
@@ -44,8 +45,8 @@ Frontmatter 字段：
 
 | 组件 | 用途 |
 |------|------|
-| `NextHeader.astro` | 头部 + 导航（从 yaml 读 `navigation`） |
-| `NextFooter.astro` | 页脚（备案信息等，硬编码） |
+| `NextHeader.astro` | 头部 + 导航（从 yaml 读 `header` 和 `navigation`） |
+| `NextFooter.astro` | 页脚（备案、CDN、版权，硬编码不走 yaml） |
 | `PostCardNext.astro` | 文章列表卡片（首页、分页页） |
 | `Giscus.astro` | 评论组件（配置走 yaml，懒加载，跟随暗色模式） |
 

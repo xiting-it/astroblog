@@ -4,7 +4,7 @@
  * 设计参考：Astro Starlight
  * - 字体：系统字体栈（零网络请求，macOS 萍方 / Windows 雅黑）
  * - 配色：CSS 变量驱动，灰度阶梯 + 蓝色强调色
- * - 代码块：深色背景（GitHub Dark 风格）
+ * - 代码块：浅色背景（Xcode Light / atom-one-light 风格，由客户端 highlight.js 渲染）
  * ============================================================ */
 
 /* ===== Starlight 风格 CSS 变量 ===== */

@@ -75,7 +75,7 @@ const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
       posts.map((post) => (
         <PostCardNext
           title={post.data.title}
-          url={`/blog/${post.id.replace('.md', '')}/`}
+          url={`/blog/${post.id}/`}
           date={post.data.pubDate.toLocaleDateString('zh-CN')}
           updatedDate={post.data.updatedDate?.toLocaleDateString('zh-CN')}
           categories={post.data.category ? [{ name: post.data.category, url: `/categories/${post.data.category}` }] : []}

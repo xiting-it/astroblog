@@ -45,10 +45,6 @@ export interface SiteConfig {
     name: string;
     url: string;
   }>;
-  footer: {
-    copyright: string;
-    powered_by: string;
-  };
   search: {
     enabled: boolean;
     placeholder: string;
@@ -67,12 +63,6 @@ export interface SiteConfig {
       theme: string;
       darkTheme: string;
     };
-  };
-  features: {
-    back_to_top: boolean;
-    pace_loading: boolean;
-    code_highlight: boolean;
-    lazy_load_images: boolean;
   };
 }
 

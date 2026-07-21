@@ -58,7 +58,7 @@ try {
         <div class="tag-posts">
           {tagPosts.map((post) => (
             <article class="post-item">
-              <a href={`/blog/${post.id.replace('.md', '')}/`} class="post-link">
+              <a href={`/blog/${post.id}/`} class="post-link">
                 <span class="post-date">
                   {new Date(post.data.pubDate).toLocaleDateString('zh-CN')}
                 </span>

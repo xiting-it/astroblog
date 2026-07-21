@@ -10,7 +10,7 @@ export async function getStaticPaths() {
     const publishedPosts = posts.filter(post => post.data.draft !== true);
 
     return publishedPosts.map((post) => ({
-      params: { slug: post.id.replace('.md', '') },
+      params: { slug: post.id },
       props: { post },
     }));
   } catch (error) {
@@ -166,7 +166,7 @@ const wordCount = rawContent.length;
         <!-- Navigation Section -->
         <div class="post-navigation">
           {prevPost && (
-            <a class="nav-btn prev-btn" href={`/blog/${prevPost.id.replace('.md', '')}`}>
+            <a class="nav-btn prev-btn" href={`/blog/${prevPost.id}/`}>
               <span class="nav-label">上一篇</span>
               <span class="nav-title">{prevPost.data.title}</span>
             </a>
@@ -177,7 +177,7 @@ const wordCount = rawContent.length;
           </a>
 
           {nextPost && (
-            <a class="nav-btn next-btn" href={`/blog/${nextPost.id.replace('.md', '')}`}>
+            <a class="nav-btn next-btn" href={`/blog/${nextPost.id}/`}>
               <span class="nav-label">下一篇</span>
               <span class="nav-title">{nextPost.data.title}</span>
             </a>
@@ -190,7 +190,7 @@ const wordCount = rawContent.length;
   <!-- Giscus 评论系统 -->
   <div class="posts-expand comment-section">
     <div class="comment-block">
-      <Giscus path={`/blog/${post.id.replace('.md', '')}/`} />
+      <Giscus path={`/blog/${post.id}/`} />
     </div>
   </div>
 </NextLayout>

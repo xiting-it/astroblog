@@ -21,11 +21,11 @@ const bgConfig = config.background;
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2" />
     <meta name="theme-color" content="#222" />
     <meta name="description" content={description} />
-    <meta name="keywords" content="daliansky,黑果小兵,macOS,Hackintosh,黑苹果,linux,blog.daliansky.net" />
+    <meta name="keywords" content={config.site.keywords} />
     <title>{title}</title>
 
     <!-- Favicon -->
-    <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.png" />
 
@@ -477,90 +477,23 @@ const bgConfig = config.background;
           });
         });
 
-        // 确保背景视频自动播放
+        // 确保背景视频自动播放（某些浏览器会阻止 autoplay）
         const backgroundVideo = document.getElementById('background-video');
         if (backgroundVideo) {
-          let playAttemptCount = 0;
-          const maxPlayAttempts = 3;
-
-          // 尝试播放视频
-          const playVideo = () => {
-            if (playAttemptCount >= maxPlayAttempts) {
-              console.log('达到最大播放尝试次数');
-              return;
-            }
-
-            playAttemptCount++;
-
-            backgroundVideo.play().then(() => {
-              console.log('背景视频开始播放');
-              // 播放成功，设置较低的播放速率以避免卡顿
-              if (backgroundVideo.playbackRate > 1.0) {
-                backgroundVideo.playbackRate = 1.0;
-              }
-            }).catch(error => {
-              console.log('自动播放被阻止，尝试其他方法:', error);
-              // 如果自动播放被阻止，添加点击监听器
-              if (playAttemptCount === 1) {
-                document.addEventListener('click', function playOnClick() {
-                  backgroundVideo.play();
-                  document.removeEventListener('click', playOnClick);
-                }, { once: true });
-              }
+          const tryPlay = () => {
+            backgroundVideo.play().catch(() => {
+              // 自动播放被阻止，等用户首次点击后重试
+              const resume = () => {
+                backgroundVideo.play().catch(() => {});
+                document.removeEventListener('click', resume);
+              };
+              document.addEventListener('click', resume, { once: true });
             });
           };
-
-          // 监听视频加载状态
-          backgroundVideo.addEventListener('loadeddata', () => {
-            console.log('视频数据已加载');
-            // 视频数据加载完成后尝试播放
-            playVideo();
-          });
-
-          backgroundVideo.addEventListener('canplay', () => {
-            console.log('视频可以播放');
-          });
-
-          backgroundVideo.addEventListener('canplaythrough', () => {
-            console.log('视频可以流畅播放');
-          });
-
-          // 监听播放进度，防止卡顿
-          backgroundVideo.addEventListener('progress', () => {
-            // 视频正在加载
-          });
-
-          // 监听播放速率
-          backgroundVideo.addEventListener('ratechange', () => {
-            console.log('播放速率:', backgroundVideo.playbackRate);
-          });
-
-          // 监听视频状态
-          backgroundVideo.addEventListener('suspend', () => {
-            console.log('视频加载被挂起');
-            // 视频加载被挂起，再次尝试播放
-            playVideo();
-          });
-
-          backgroundVideo.addEventListener('stalled', () => {
-            console.log('视频加载停滞');
-          });
-
-          backgroundVideo.addEventListener('waiting', () => {
-            console.log('视频等待数据');
-          });
-
-          backgroundVideo.addEventListener('ended', () => {
-            // 视频播放结束，重新开始（虽然有loop属性，但为了保险）
-            console.log('视频播放结束，重新开始');
-            backgroundVideo.currentTime = 0;
-            backgroundVideo.play();
-          });
-
-          // 页面加载完成后立即尝试播放
           if (backgroundVideo.readyState >= 2) {
-            // 视频已经有足够的数据
-            playVideo();
+            tryPlay();
+          } else {
+            backgroundVideo.addEventListener('loadeddata', tryPlay, { once: true });
           }
         }
       });

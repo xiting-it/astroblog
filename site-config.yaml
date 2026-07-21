@@ -1,7 +1,7 @@
 site:
   title: "Xiting's Blog"
-  description: '黑果小兵,daliansky,blog.daliansky.net,macOS,Hackintosh,黑苹果,linux'
-  keywords: 'daliansky,黑果小兵,macOS,Hackintosh,黑苹果,linux,blog.daliansky.net'
+  description: 'Xiting 的个人博客 - Agent、LLM、macOS 开发与学习笔记'
+  keywords: 'Xiting,blog,Agent,LLM,macOS,Astro'
   author: 'Xiting'
 
 background:
@@ -41,10 +41,6 @@ navigation:
   - name: '关于'
     url: '/about'
 
-footer:
-  copyright: '© 2024 Xiting. All rights reserved.'
-  powered_by: 'Astro'
-
 search:
   enabled: true
   placeholder: '搜索文章...'
@@ -64,9 +60,3 @@ comment:
     lang: 'zh-CN'
     theme: 'light_tritanopia'           # 亮色主题
     darkTheme: 'dark_tritanopia'        # 暗色主题
-
-features:
-  back_to_top: true
-  pace_loading: false  # 已移除 Pace.js 加载动画
-  code_highlight: true
-  lazy_load_images: false

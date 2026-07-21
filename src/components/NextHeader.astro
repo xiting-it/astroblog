@@ -1,6 +1,8 @@
 ---
 import { loadConfig } from '../lib/config';
 
+const config = loadConfig();
+
 // 图标按路径映射，属于表现层（不在 site-config.yaml 里）
 const navIconMap: Record<string, string> = {
   '/': 'fa-solid fa-house',
@@ -10,7 +12,7 @@ const navIconMap: Record<string, string> = {
   '/about': 'fa-solid fa-circle-info',
 };
 
-const { navigation } = loadConfig();
+const { navigation, header } = config;
 const menuItems = navigation.map((item) => ({
   name: item.name,
   path: item.url,
@@ -24,10 +26,10 @@ const menuItems = navigation.map((item) => ({
       <div class="site-meta">
         <div class="custom-logo-site-title">
           <a href="/" class="brand" rel="start">
-            <span class="site-title">XitingのBlog</span>
+            <span class="site-title">{header.title}</span>
           </a>
         </div>
-        <p class="site-subtitle">Agent macOS LLM</p>
+        <p class="site-subtitle">{header.subtitle}</p>
       </div>
 
       <div class="site-nav-toggle">
@@ -186,7 +188,7 @@ const menuItems = navigation.map((item) => ({
       border: none;
       border-radius: 0 !important;
       padding: 0;
-      cursor: move;
+      cursor: pointer;
       display: flex;
       flex-direction: column;
       gap: 5px;
@@ -281,35 +283,19 @@ const menuItems = navigation.map((item) => ({
 
 <div class="site-nav-overlay" id="siteNavOverlay"></div>
 <script is:inline>
-  // Search popup functionality
   document.addEventListener('DOMContentLoaded', function() {
-    const searchBtn = document.querySelector('.menu-item-search');
-    const searchPopup = document.querySelector('.search-popup');
-    const closeBtn = document.querySelector('.popup-btn-close');
-
-    searchBtn?.addEventListener('click', function() {
-      // 允许默认跳转到搜索页面
-      // 不阻止默认行为，让链接正常工作
-    });
-
-    closeBtn?.addEventListener('click', function() {
-      searchPopup?.classList.remove('local-search-popup-show');
-    });
-
-    // Active menu item detection
+    // 高亮当前菜单项
     const currentPath = window.location.pathname;
     const menuItems = document.querySelectorAll('.menu-item[data-path]');
 
     menuItems.forEach(item => {
       const itemPath = item.getAttribute('data-path');
-
-      // Check if current path matches menu item path
       if (currentPath === itemPath || (itemPath !== '/' && currentPath.startsWith(itemPath + '/'))) {
         item.classList.add('menu-item-active');
       }
     });
 
-    // Mobile navigation toggle
+    // 移动端导航开关
     const navToggle = document.querySelector('.site-nav-toggle button');
     const siteNav = document.querySelector('.site-nav');
 
@@ -319,56 +305,10 @@ const menuItems = navigation.map((item) => ({
     }
 
     if (navToggle) {
-      navToggle.addEventListener('click', function() {
-        // 如果正在拖动，不触发点击事件
-        if (navToggle.classList.contains('dragging')) {
-          return;
-        }
-        toggleNav();
-      });
+      navToggle.addEventListener('click', toggleNav);
     }
 
-    // 拖动功能
-    let isDragging = false;
-    let offsetX = 0;
-    let offsetY = 0;
-
-    if (navToggle) {
-      navToggle.addEventListener('mousedown', function(e) {
-        isDragging = true;
-
-        const rect = navToggle.getBoundingClientRect();
-        offsetX = e.clientX - rect.left;
-        offsetY = e.clientY - rect.top;
-
-        navToggle.classList.add('dragging');
-        e.preventDefault();
-      });
-
-      document.addEventListener('mousemove', function(e) {
-        if (!isDragging || !navToggle) return;
-
-        const x = e.clientX - offsetX;
-        const y = e.clientY - offsetY;
-
-        // 限制在屏幕范围内
-        const maxX = window.innerWidth - 40;
-        const maxY = window.innerHeight - 40;
-
-        navToggle.style.left = Math.max(0, Math.min(x, maxX)) + 'px';
-        navToggle.style.top = Math.max(0, Math.min(y, maxY)) + 'px';
-        navToggle.style.right = 'auto';
-      });
-
-      document.addEventListener('mouseup', function() {
-        if (isDragging && navToggle) {
-          isDragging = false;
-          navToggle.classList.remove('dragging');
-        }
-      });
-    }
-
-    // Close nav when clicking on menu items
+    // 点击菜单项后自动收起移动端导航
     const mobileMenuItems = document.querySelectorAll('.site-nav .menu-item a');
     mobileMenuItems.forEach((item) => {
       item.addEventListener('click', function() {

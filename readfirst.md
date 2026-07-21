@@ -3,7 +3,7 @@
 ## 一、整体技术栈
 
 - **框架**：Astro 6.3 + MDX
-- **主题**：Starlight 风格（基于 NexT Muse 演化）
+- **主题**：Starlight 风格（已从 NexT Muse 完全迁移过来）
 - **部署**：Cloudflare Pages（静态站点）
 - **语言**：TypeScript
 
@@ -38,7 +38,7 @@ astroblog/
 │   └── env.d.ts
 ├── public/
 │   ├── css/next.css             # 主样式（Starlight 风格 CSS 变量）
-│   └── images/                  # 图标、头像等
+│   └── images/                  # favicon
 ├── site-config.yaml             # 全局配置（单一配置源）
 ├── astro.config.mjs
 ├── remark-custom-blockquotes.js # Markdown 扩展（Aside 容器）
@@ -58,11 +58,9 @@ astroblog/
 ```yaml
 site:          # 标题、描述、关键词、作者
 background:    # 背景模式（png / mp4 / player）
-header:        # 头部标题副标题
+header:        # 头部标题副标题（NextHeader 读取）
 navigation:    # 导航菜单（NextHeader 读取此字段渲染）
-footer:        # 页脚（当前代码未读取，NextFooter 硬编码）
 search:        # 搜索开关
-features:      # 功能开关（当前代码未读取，保留扩展位）
 
 # Giscus 评论系统
 comment:
@@ -79,6 +77,8 @@ comment:
     theme: 'light_tritanopia'        # 亮色主题
     darkTheme: 'dark_tritanopia'     # 暗色主题
 ```
+
+> 页脚的备案、CDN、版权等信息是硬编码在 `NextFooter.astro` 里的（为中国网站特有的备案场景），不走 yaml。
 
 ### `astro.config.mjs`
 
@@ -118,7 +118,7 @@ NextLayout.astro（唯一主布局）
 ```
 
 **NextLayout** 提供：
-- 背景渲染（三种模式：PNG / MP4 / DogeCloud 播放器）
+- 背景渲染（两种模式：PNG / MP4；player 模式已废置但代码保留）
 - 返回顶部按钮（滚动百分比）
 - 动态标题（切换标签时显示提示语）
 - 点击水波纹效果
@@ -195,7 +195,7 @@ CSS 变量驱动，定义在 `public/css/next.css` 顶部：
 ## 八、特殊功能
 
 1. **动态标题**：切换标签页时显示"zzz睡觉了晚安"，返回时显示"打起精神来ing"
-2. **背景模式**：支持 PNG 静态图 / MP4 动态视频 / DogeCloud 播放器三选一
+2. **背景模式**：支持 PNG 静态图 / MP4 动态视频两选一（player 模式已废置）
 3. **评论系统**：Giscus（基于 GitHub Discussions，仓库 `xiting-it/commentgiscus`）
 4. **分页**：每页 5 篇文章（`POSTS_PER_PAGE = 5`）
 5. **本地搜索**：构建期生成 JSON 索引注入到 `/search` 页面，客户端模糊匹配
